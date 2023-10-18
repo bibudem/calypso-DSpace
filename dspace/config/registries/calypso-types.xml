@@ -14,12 +14,12 @@
   </dspace-header>
 
   <dc-schema>
-    <name>Calypso</name>
+    <name>calypso</name>
     <namespace>http://www.bib.umontreal.ca/</namespace>
   </dc-schema>
 
   <dc-type>
-    <schema>Calypso</schema>
+    <schema>calypso</schema>
     <element>contentdmurl</element>
     <qualifier></qualifier>
     <scope_note>
