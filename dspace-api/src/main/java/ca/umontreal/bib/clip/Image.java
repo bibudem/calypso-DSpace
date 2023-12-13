@@ -1,4 +1,4 @@
-package ca.udem.bibudem.calypso;
+package ca.umontreal.bib.clip;
 
 // Import statements if needed
 
@@ -8,7 +8,6 @@ public class Image {
     private String itemHandle;
     private String itemName;
     private String collectionId;
-    private String urlProperty; // Add other properties as needed
     private String url; // Add other properties as needed
 
     // Constructors
@@ -21,10 +20,6 @@ public class Image {
         this.collectionId = collectionId;
         this.url = url;
     }
-
-    // Getters and setters for each property
-
-    // (Getters and setters for other properties...)
 
 
     public String getUrl() {
@@ -44,7 +39,6 @@ public class Image {
                 ", itemHandle='" + itemHandle + '\'' +
                 ", itemName='" + itemName + '\'' +
                 ", collectionId='" + collectionId + '\'' +
-                ", urlProperty='" + urlProperty + '\'' +
                 ", url='" + url + '\'' +
                 '}';
     }
