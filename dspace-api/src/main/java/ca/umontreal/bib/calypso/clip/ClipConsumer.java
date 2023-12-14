@@ -1,4 +1,4 @@
-package ca.umontreal.bib.clip;
+package ca.umontreal.bib.calypso.clip;
 
 import org.dspace.content.Bitstream;
 import org.dspace.content.factory.ContentServiceFactory;
@@ -13,7 +13,6 @@ import org.dspace.service.impl.HttpConnectionPoolService;
 import org.dspace.content.DSpaceObject;
 import org.apache.logging.log4j.Logger;
 import org.dspace.core.LogHelper;
-import ca.umontreal.bib.clip.Image;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,10 +39,13 @@ import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.ArrayUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import ca.umontreal.bib.calypso.clip.Image;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 
-public class ClipAddEventConsumer implements Consumer {
+public class ClipConsumer implements Consumer {
 
         private static final Logger log = org.apache.logging.log4j.LogManager.getLogger();
         private HttpConnectionPoolService httpConnectionPoolService; // Ajout de la déclaration

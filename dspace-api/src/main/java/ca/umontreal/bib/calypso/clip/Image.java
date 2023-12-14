@@ -1,4 +1,4 @@
-package ca.umontreal.bib.clip;
+package ca.umontreal.bib.calypso.clip;
 
 // Import statements if needed
 
