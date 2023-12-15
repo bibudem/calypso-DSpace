@@ -1,308 +1,305 @@
 package ca.umontreal.bib.calypso.clip;
 
-import org.dspace.content.Bitstream;
-import org.dspace.content.factory.ContentServiceFactory;
-import org.dspace.content.service.ItemService;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.SQLException;
+import java.util.Base64;
+
+import org.dspace.core.Constants;
 import org.dspace.core.Context;
-import org.dspace.services.factory.DSpaceServicesFactory;
-import org.dspace.services.ConfigurationService;
-import org.dspace.discovery.IndexableObject;
+import org.dspace.core.Utils;
+import org.dspace.authorize.AuthorizeException;
+import org.dspace.content.Bitstream;
+import org.dspace.content.Bundle;
+import org.dspace.content.Item;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.BitstreamService;
 import org.dspace.event.Consumer;
 import org.dspace.event.Event;
-import org.dspace.service.impl.HttpConnectionPoolService;
-import org.dspace.content.DSpaceObject;
-import org.apache.logging.log4j.Logger;
-import org.dspace.core.LogHelper;
+import org.dspace.services.factory.DSpaceServicesFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.net.URL;
-import java.io.InputStream;
-import java.net.URISyntaxException;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
-
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import org.apache.commons.lang3.ArrayUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ca.umontreal.bib.calypso.clip.Image;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-
+import org.apache.logging.log4j.Logger;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
 
 public class ClipConsumer implements Consumer {
 
-        private static final Logger log = org.apache.logging.log4j.LogManager.getLogger();
-        private HttpConnectionPoolService httpConnectionPoolService; // Ajout de la déclaration
-        private String clipServerUrl;
-        private ObjectMapper objectMapper = new ObjectMapper();
-        private String itemId;
-        private String uuid;
-        private String itemHandle;
-        private String itemName;
-        private String collectionId;
-        private String url;
+    // Pour récupérer le contenu d'un Bitstream
+    private BitstreamService bitstreamService = ContentServiceFactory.getInstance().getBitstreamService();
 
+    // Un logger
+    private static Logger log = org.apache.logging.log4j.LogManager.getLogger(ClipConsumer.class);
+
+    // L'URL de notre serveur CLIP
+    private String clipServerUrl;
+
+    // Un objet pour produire du Json
+    private ObjectMapper mapper;
+
+    // La méthode initialize est appelée une seule fois
     @Override
     public void initialize() throws Exception {
-        log.debug("Initializing ClipAddEventConsumer");
-
-        try {
-            ConfigurationService configurationService = DSpaceServicesFactory.getInstance().getConfigurationService();
-            clipServerUrl = configurationService.getProperty("clip.server.url");
-        } catch (Exception e) {
-            log.error("Error during initialization", e);
-            throw new RuntimeException("Error during initialization", e);
-        }
+        clipServerUrl = DSpaceServicesFactory.getInstance().getConfigurationService().getProperty("calypso.clip.server.url");
+        mapper = new ObjectMapper();
     }
 
-   @Override
-   public void consume(Context context, Event event) throws Exception {
-
-       int eventType = event.getEventType();
-       int subjectType = event.getSubjectType();
-       DSpaceObject subject = event.getSubject(context);
-       DSpaceObject object = event.getObject(context);
-
-       if (subject instanceof Bitstream) {
-           Bitstream modifiedBitstream = (Bitstream) subject;
-
-           log.info("Bitstream ID: {}", modifiedBitstream.getID());
-           log.info("Bitstream Name: {}", modifiedBitstream.getName());
-           log.info("Bitstream Bundle Name: {}", modifiedBitstream.getBundles().get(0).getName());
-
-           // Vérifiez si le type d'événement est pris en charge
-           if (!isValidEventType(eventType, subjectType)) {
-               return;
-           }
-
-           try {
-               switch (eventType) {
-                   case Event.MODIFY:
-                   case Event.MODIFY_METADATA:
-                       log.info("Processing modified bitstream: {}", modifiedBitstream);
-                       processModifiedBitstream(context, modifiedBitstream, "update");
-                       break;
-
-                   case Event.ADD:
-                       log.info("Processing create bitstream: {}", modifiedBitstream);
-                       processModifiedBitstream(context, modifiedBitstream, "index");
-                       break;
-
-                   case Event.DELETE:
-                   case Event.REMOVE:
-                       log.info("Processing delete bitstream: {}", modifiedBitstream);
-                       processModifiedBitstream(context, modifiedBitstream, "delete");
-                       break;
-
-                   default:
-                       log.warn("IndexConsumer received an unknown event type: " + eventType +
-                               " for subject type: " + subjectType + ". Skipping event.");
-                       break;
-               }
-           } catch (Exception e) {
-               log.error("Error processing modified bitstream", e);
-               throw new Exception("Error processing modified bitstream", e);
-           }
-       } else {
-           log.warn("ClipAddEventConsumer received une erreur: " + subject);
-           return;
-       }
-   }
-
-
-   private boolean isValidEventType(int eventType, int subjectType) {
-       log.info("Event value: ", eventType);
-       return (eventType == Event.MODIFY || eventType == Event.MODIFY_METADATA ||
-               eventType == Event.ADD || eventType == Event.DELETE || eventType == Event.REMOVE);
-   }
-
-
-    private String convertImageToJson(Image image) {
-        try {
-            return objectMapper.writeValueAsString(image);
-        } catch (JsonProcessingException e) {
-            log.error("Error converting image to JSON", e);
-            // Gérer l'exception localement, par exemple, en enregistrant les détails dans les journaux.
-            return null; // Ou une autre valeur par défaut, selon la logique de votre application.
-        }
-    }
-
-
-    private void processModifiedBitstream(Context context, Bitstream modifiedBitstream, String eventType) throws  Exception{
-        try {
-            String bitstreamID = modifiedBitstream.getID().toString();
-            String bitstreamUUID = modifiedBitstream.getInternalId();
-            String bundleName = modifiedBitstream.getBundles().get(0).getName();
-            String collectionId = getCollectionIdForBitstream(modifiedBitstream);
-            String url = buildBitstreamUrl(context, modifiedBitstream);
-
-            log.info("Processing details - Bitstream ID: {}, UUID: {}, Name: {}, Bundle: {}, Collection ID: {}, URL: {}",
-                    bitstreamID, bitstreamUUID, modifiedBitstream.getName(), bundleName, collectionId, url);
-            if (eventType.equals("update")) {
-                        updateClipImage(bitstreamID, bitstreamUUID, modifiedBitstream.getName(), bundleName, collectionId, url);
-            } else if (eventType.equals("index")) {
-                indexClipImage(bitstreamID, bitstreamUUID, modifiedBitstream.getName(), bundleName, collectionId, url);
-            } else if (eventType.equals("delete")) {
-                deleteClipImage(bitstreamID);
-            }
-
-                }
-             catch (Exception e) {
-                log.error("Error processing modified bitstream", e);
-                throw new Exception("Error processing modified bitstream", e);
-            }
-    }
-
-
-    private void updateClipImage(String itemId, String uuid, String itemHandle, String itemName, String collectionId, String url) {
-            try {
-                String endpoint = "/" + itemId;
-                String requestBody = buildRequestBody(itemId, uuid, itemHandle, itemName, collectionId, url);
-                consumerClip(requestBody, endpoint, "PUT");
-            } catch (Exception e) {
-                log.error("Error updating clipImage", e);
-                throw new RuntimeException("Error updating clipImage", e);
-            }
-        }
-
-
-    private void indexClipImage(String itemId, String uuid, String itemHandle, String itemName, String collectionId, String url) throws IOException {
-         String endpoint = "/" + itemId;
-         String requestBody = buildRequestBody(itemId, uuid, itemHandle, itemName, collectionId, url);
-         consumerClip(requestBody, endpoint, "POST");
-    }
-
-    private void deleteClipImage(String idImage) throws IOException {
-            String endpoint = "/" + idImage;
-            consumerClip(idImage, endpoint, "DELETE");
-        }
-
-    private String buildRequestBody(String itemId, String uuid, String itemHandle, String itemName, String collectionId, String url) {
-        log.info("Building request body for update/create/delete");
-        Image image = new Image(itemId, uuid, itemHandle, itemName, collectionId, url);
-        String jsonBody = convertImageToJson(image);
-        return jsonBody;
-    }
-
-
-    private String getCollectionIdForBitstream(Bitstream bitstream) throws SQLException {
-        String collectionId = bitstream.getBundles().get(0).getItems().get(0).getOwningCollection().getID().toString();
-        return collectionId;
-    }
-
-    private String buildBitstreamUrl(Context context, Bitstream bitstream) {
-
-        try {
-            ConfigurationService configurationService = DSpaceServicesFactory.getInstance().getConfigurationService();
-            String baseUrl = configurationService.getProperty("dspace.server.url");
-            String bundleName = bitstream.getBundles().get(0).getName();
-            String handle = bitstream.getBundles().get(0).getItems().get(0).getHandle();
-            log.info("Building bitstream URL"+baseUrl);
-            return baseUrl + "/api/core/bitstream/" + bitstream.getID() + "/content" ;
-        } catch (SQLException e) {
-            log.error("Error building bitstream URL", e);
-            return null;
-        }
-    }
-
-    private CloseableHttpClient getClient() {
-        return HttpClients.createDefault();
-    }
-
-    /**
-     * Envoie une requête HTTP avec le corps de la requête donné au serveur spécifié.
-     *
-     * @param requestBody Le corps de la requête.
-     * @param endpoint    L'URL de l'API à atteindre.
-     * @param method      La méthode HTTP (POST, PUT, DELETE, etc.).
-     * @throws IOException En cas d'erreur d'entrée/sortie.
+    /*
+     * 
+     * Dépôt d'un document, première étape (avant de cliquer "Déposer").
+     * On a un EventType=CREATE, SubjectType=BITSTREAM. Mais à ce moment, item.isArchived()
+     * est false. D'ailleurs on n'a pas encore son nom.
+     * Une fois qu'on clique sur "Déposer", on n'a pas de CREATE sur le Bitstream, on a des
+     * MODIFY, mais on a un INSTALL pour l'Item, donc on doit réagir sur cet événement
+     * et associer tous les Bitstream à ce moment.
+     * 
+     * Si on ajoute un Bitstream à un Item, on a un EventType=CREATE, SubjectType=BITSTREAM
+     * et on a un item.isArchived() = true, et son nom, donc on peut l'ajouter.
+     * 
+     * Si on retire un Bitstream à un Item, on a un EventType=DELETE, SubjectType=BITSTREAM,
+     * donc on peut le supprimer de l'index CLIP.
+     * 
+     * Si on édite un bitstream, on peut seulement modifier ses métadonnées, donc aucun impact
+     * sur l'indexation CLIP.
+     * 
+     * Si on retire (withdraw) un item, on n'a pas de CREATE/DELETE sur les Bitstream. On doit donc
+     * réagir sur le EventType=MODIFY, SubjectType=ITEM, detail="WITHDRAW" pour supprimer
+     * tous les Bitstream de CLIP.
+     * 
+     * Si on réintègre un item, on n'a pas de CREATE/DELETE sur les Bitstream, on doit donc
+     * réagir sur le EventType=MODIFY, SubjectType=ITEM, detail="REINSTATE".
+     * 
+     * Si on supprime un item, on aura des DELETE sur les Bitstream, on peut réagir
+     * là-dessus.
+     * 
+     * TODO: il reste à observer et gérer les événements suivants:
+     * - on déplace un item dans une autre collection
+     * - on modifie le dc:title d'un item (donc getName())
+     * - vérification et modification des permissions
      */
-    public void consumerClip(String requestBody, String endpoint, String method) throws IOException {
-        String apiUrl = clipServerUrl + endpoint;
-        URL url = new URL(apiUrl);
 
-        try (CloseableHttpClient httpClient = getClient()) {
-            // Configurer la requête HTTP POST/PUT/DELETE
-            HttpRequestBase request;
-            switch (method.toUpperCase()) {
-                case "POST":
-                    request = new HttpPost(url.toURI());
-                    break;
-                case "PUT":
-                    request = new HttpPut(url.toURI());
-                    break;
-                case "DELETE":
-                    request = new HttpDelete(url.toURI());
-                    break;
-                default:
-                    throw new IllegalArgumentException("Méthode HTTP non supportée: " + method);
-            }
+     // Méthode principale qui doit traiter l'événement (si nécessaire)
+    @Override
+    public void consume(Context context, Event event) throws Exception {
 
-            request.setHeader("Content-Type", "application/json");
+        // Pour déterminer si on doit agir et ce qu'on doit faire, on a besoin
+        // du type de sujet (item, bitstream, ...), du type d'événement
+        // et parfois des détails
+        int subjectType = event.getSubjectType();
+        int eventType = event.getEventType();
+        String detail = event.getDetail();
 
-            if ("POST".equals(method) || "PUT".equals(method)) {
-                StringEntity entity = new StringEntity(requestBody);
-                ((HttpEntityEnclosingRequestBase) request).setEntity(entity);
-            }
+        if ( subjectType == Constants.ITEM && (eventType == Event.INSTALL || (eventType == Event.MODIFY && detail != null && detail.equals("REINSTATE"))) ) {
 
-            // Exécuter la requête
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                // Lire la réponse du serveur
-                HttpEntity responseEntity = response.getEntity();
-                if (responseEntity != null) {
-                    try (InputStream content = responseEntity.getContent()) {
-                        // Process the content as needed
+            // Un item est déposé ou réintégré
+            Item item = (Item)event.getSubject(context);
+            String itemId = item.getID().toString();
+            String itemName = item.getName().toString();
+            String itemHandle = item.getHandle().toString();    // Attention ça pourrait être null
+            String itemCollectionId = item.getOwningCollection().getID().toString();    // On prend pour acquis que c'est la collection principale qu'on veut
+
+            // On va faire une boucle sur ses Bundle puis ses Bitstream en traitant
+            // uniquement ceux qui nous intéressent (les images)
+            for (Bundle bdl: item.getBundles()) {
+                // On ignore le bundle THUMBNAIL et le bundle LICENCE
+                if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
+                    for (Bitstream bts: bdl.getBitstreams()) {
+                        addBitstream(bts, context, itemId, itemName, itemHandle, itemCollectionId);
                     }
                 }
+            }
+        } else if (subjectType == Constants.BITSTREAM && eventType == Event.CREATE) {
 
-                // Handle HTTP status code
-                int statusCode = response.getStatusLine().getStatusCode();
-                if (statusCode >= 200 && statusCode < 300) {
-                    log.info("Request was successful. Status code: {}", statusCode);
-                } else {
-                    log.warn("Request failed with status code: {}", statusCode);
-                    // Handle error response
+            // On a l'ajout d'un Bitstream, mais on le traite uniquement si l'item est déjà
+            // archivé. Ça correspond à ajouter un Bitstream à un item existant.
+            Bitstream bts = (Bitstream)event.getSubject(context);
+            Bundle bdl = bts.getBundles().get(0);
+            Item item = bdl.getItems().get(0);
+            if (item.isArchived()) {
+                if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
+                    addBitstream(bts, context, item.getID().toString(), item.getName(), item.getHandle(), item.getOwningCollection().getID().toString());
                 }
             }
-        } catch (IOException | IllegalArgumentException | URISyntaxException e) {
-            log.error("Error during HTTP request", e);
-            // Handle the exception as needed
+        } else if ( subjectType == Constants.ITEM && eventType == Event.MODIFY && detail != null && detail.equals("WITHDRAW")) {
+
+            // Un item est retiré, on retire les images de l'index CLIP
+            Item item = (Item)event.getSubject(context);
+            for (Bundle bdl: item.getBundles()) {
+                // On ignore le bundle THUMBNAIL et le bundle LICENCE
+                if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
+                    for (Bitstream bts: bdl.getBitstreams()) {
+                        deleteBitstream(bts, context);
+                    }
+                }
+            }
+        } else if ( subjectType == Constants.BITSTREAM && eventType == Event.DELETE ) {
+
+            // Un Bitstream est supprimé, soit lui-même soit parce que son Item l'est
+            // On n'a pas nécessairement beaucoup de contexte (bundle, ...), donc on va
+            // toujours essayer de le supprimer de l'index CLIP
+            Bitstream bts = (Bitstream)event.getSubject(context);
+            deleteBitstream(bts, context);
+        }
+
+    }
+
+    // Ajout (si nécessaire) d'un Bitstream
+    private void addBitstream(Bitstream bts, Context context, String itemId, String itemName, String itemHandle, String itemCollectionId) throws IOException, SQLException, AuthorizeException {
+
+        // Pour l'instant on suppose qu'on supporte tout ce qui est une image
+        String mimeType = bts.getFormat(context).getMIMEType();
+        if (mimeType.indexOf("image/") == 0) {
+
+            // On doit passer le contenu en base64 dans le Json car
+            // l'URL du bitstream n'est pas encore accessible publiquement
+            InputStream is = bitstreamService.retrieve(context, bts);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            Utils.bufferedCopy(is, bos);
+            bos.close();
+            String content = Base64.getEncoder().encodeToString(bos.toByteArray());
+            String uuid = bts.getID().toString();
+            ClipImage img = new ClipImage(uuid, itemId, itemName, itemHandle, itemCollectionId, content);
+            String imgJson = mapper.writeValueAsString(img);
+            String endpoint = "/" + uuid;
+            sendClipRequest(endpoint, "POST", imgJson);
         }
     }
 
+    // Retrait (si nécessaire) d'un Bitstream
+    private void deleteBitstream(Bitstream bts, Context context) throws IOException {
+        sendClipRequest("/" + bts.getID().toString(), "DELETE", null);
+    }
 
-    @Override
-    public void end(Context ctx) {
-        try {
-            log.info("End of ClipAddEventConsumer");
-        } catch (Exception e) {
-            log.error("Error during end", e);
-        } finally {
-            // ...
+    // Envoi d'une requête à l'API CLIP
+    private void sendClipRequest(String endpoint, String method, String body) throws ClientProtocolException, IOException {
+        String url = clipServerUrl + endpoint;
+        HttpUriRequest req;
+
+        // On construit la requête 
+        switch (method) {
+            case "POST":
+                req = RequestBuilder.post(url)
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("Accept", "application/json")
+                    .setEntity(new StringEntity(body, ContentType.APPLICATION_JSON))
+                    .build();
+                break;
+            case "PUT":
+                req = RequestBuilder.put(url)
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("Accept", "application/json")
+                    .setEntity(new StringEntity(body, ContentType.APPLICATION_JSON))
+                    .build();
+                break;
+            case "DELETE":
+                req = RequestBuilder.delete(url)
+                    .addHeader("Accept", "application/json")
+                    .build();
+                break;
+            default:
+                log.warn("Méthode HTTP non supportée: " + method);
+                return;
         }
+
+        // On exécute la requête
+        HttpClient client = HttpClientBuilder.create().build();
+        HttpResponse response = client.execute(req);
+
+        // On log la réponse s'il y a erreur
+        if (response.getStatusLine().getStatusCode() != 200)
+            log.error(response.getStatusLine().getStatusCode() + " / " + response.getStatusLine().getReasonPhrase());
+
     }
 
     @Override
-    public void finish(Context ctx) {
-        // Implémentation de la méthode finish
-        log.info("Finishing ClipAddEventConsumer");
-        // Finalization if needed
+    public void end(Context ctx) throws Exception {
     }
 
+    @Override
+    public void finish(Context ctx) throws Exception {
+    }
+
+
+    /**
+     * Une classe toute simple qui permet de représenter une image à indexer
+     * avec ses propriétés, afin de la convertir en JSon pour utiliser
+     * l'API dspace-clip-api.
+     */
+    private class ClipImage {
+
+        // Les propriétés de l'image
+        private String uuid = null;
+        private String itemId = null;
+        private String itemHandle = null;
+        private String itemName = null;
+        private String collectionId = null;
+        private String content = null;
+    
+        // Une image avec toutes ses propriétés
+        public ClipImage(String uuid, String itemId, String itemName, String itemHandle, String itemCollectionId, String content) {
+            setUuid(uuid);
+            setItemId(itemId);
+            setItemName(itemName);
+            setItemHandle(itemHandle);
+            setCollectionId(itemCollectionId);
+            setContent(content);
+        }
+    
+        // L'identifiant
+        public String getUuid() {
+            return this.uuid;
+        }
+        public void setUuid(String id) {
+            this.uuid = id;
+        }
+    
+        // L'identifiant de l'item
+        public String getItemId() {
+            return this.itemId;
+        }
+        public void setItemId(String id) {
+            this.itemId = id;
+        }
+    
+        // Le titre de l'item
+        public String getItemName() {
+            return this.itemName;
+        }
+        public void setItemName(String name) {
+            this.itemName = name;
+        }
+    
+        // Le handle de l'item
+        public String getItemHandle() {
+            return this.itemHandle;
+        }
+        public void setItemHandle(String handle) {
+            this.itemHandle = handle;
+        }
+    
+        // La collection
+        public String getCollectionId() {
+            return this.collectionId;
+        }
+        public void setCollectionId(String id) {
+            this.collectionId = id;
+        }
+    
+        // Le contenu (en base64)
+        public String getContent() {
+            return this.content;
+        }
+        public void setContent(String content) {
+            this.content = content;
+        }
+    
+    }   
 }
