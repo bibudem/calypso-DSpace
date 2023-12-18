@@ -9,6 +9,9 @@ import java.util.Base64;
 import org.dspace.core.Constants;
 import org.dspace.core.Context;
 import org.dspace.core.Utils;
+import org.dspace.access.status.DefaultAccessStatusHelper;
+import org.dspace.access.status.factory.AccessStatusServiceFactory;
+import org.dspace.access.status.service.AccessStatusService;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.Bitstream;
 import org.dspace.content.Bundle;
@@ -45,11 +48,15 @@ public class ClipConsumer implements Consumer {
     // Un objet pour produire du Json
     private ObjectMapper mapper;
 
+    // Un objet qui vérifie la visibilité d'un item
+    AccessStatusService accessStatusService;
+
     // La méthode initialize est appelée une seule fois
     @Override
     public void initialize() throws Exception {
         clipServerUrl = DSpaceServicesFactory.getInstance().getConfigurationService().getProperty("calypso.clip.server.url");
         mapper = new ObjectMapper();
+        accessStatusService = AccessStatusServiceFactory.getInstance().getAccessStatusService();
     }
 
     /*
@@ -82,8 +89,8 @@ public class ClipConsumer implements Consumer {
      * 
      * TODO: il reste à observer et gérer les événements suivants:
      * - on déplace un item dans une autre collection
-     * - on modifie le dc:title d'un item (donc getName())
-     * - vérification et modification des permissions
+     * - on modifie le dc:title d'un item (donc getName()): mais on n'a pas cet événement spécifique,
+     *      si on ajoute une métadonnée, on a son nom dans detail, mais si on la modifie detail = null.
      */
 
      // Méthode principale qui doit traiter l'événement (si nécessaire)
@@ -97,38 +104,53 @@ public class ClipConsumer implements Consumer {
         int eventType = event.getEventType();
         String detail = event.getDetail();
 
-        if ( subjectType == Constants.ITEM && (eventType == Event.INSTALL || (eventType == Event.MODIFY && detail != null && detail.equals("REINSTATE"))) ) {
+        if ( 
+            ( subjectType == Constants.ITEM && (eventType == Event.INSTALL || (eventType == Event.MODIFY && detail != null && detail.equals("REINSTATE"))) ) 
+            ||
+            ( subjectType == Constants.COLLECTION && eventType == Event.ADD ) ) {
 
-            // Un item est déposé ou réintégré
-            Item item = (Item)event.getSubject(context);
-            String itemId = item.getID().toString();
-            String itemName = item.getName().toString();
-            String itemHandle = item.getHandle().toString();    // Attention ça pourrait être null
-            String itemCollectionId = item.getOwningCollection().getID().toString();    // On prend pour acquis que c'est la collection principale qu'on veut
+            // Un item est déposé ou réintégré ou ajouté dans une collection
+            Item item;
+            if ( subjectType == Constants.ITEM ) item = (Item)event.getSubject(context);
+            else item = (Item)event.getObject(context);
 
-            // On va faire une boucle sur ses Bundle puis ses Bitstream en traitant
-            // uniquement ceux qui nous intéressent (les images)
-            for (Bundle bdl: item.getBundles()) {
-                // On ignore le bundle THUMBNAIL et le bundle LICENCE
-                if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
-                    for (Bitstream bts: bdl.getBitstreams()) {
-                        addBitstream(bts, context, itemId, itemName, itemHandle, itemCollectionId);
+            // On vérifie si l'item est visible publiquement ou pas et s'il est archivé (pour éviter les ajouts
+            // initiaux à la collection)
+            if (item.isArchived() && accessStatusService.getAccessStatus(context, item).equals(DefaultAccessStatusHelper.OPEN_ACCESS)) {
+
+                String itemId = item.getID().toString();
+                String itemName = item.getName().toString();
+                String itemHandle = item.getHandle().toString();    // Attention ça pourrait être null
+                String itemCollectionId = item.getOwningCollection().getID().toString();    // On prend pour acquis que c'est la collection principale qu'on veut
+
+                // On va faire une boucle sur ses Bundle puis ses Bitstream en traitant
+                // uniquement ceux qui nous intéressent (les images)
+                for (Bundle bdl: item.getBundles()) {
+                    // On ignore le bundle THUMBNAIL et le bundle LICENCE
+                    if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
+                        for (Bitstream bts: bdl.getBitstreams()) {
+                            addBitstream(bts, context, itemId, itemName, itemHandle, itemCollectionId);
+                        }
                     }
                 }
             }
-        } else if (subjectType == Constants.BITSTREAM && eventType == Event.CREATE) {
+        }
+        else if (subjectType == Constants.BITSTREAM && eventType == Event.CREATE) {
 
             // On a l'ajout d'un Bitstream, mais on le traite uniquement si l'item est déjà
             // archivé. Ça correspond à ajouter un Bitstream à un item existant.
             Bitstream bts = (Bitstream)event.getSubject(context);
             Bundle bdl = bts.getBundles().get(0);
             Item item = bdl.getItems().get(0);
-            if (item.isArchived()) {
-                if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
-                    addBitstream(bts, context, item.getID().toString(), item.getName(), item.getHandle(), item.getOwningCollection().getID().toString());
+            if (accessStatusService.getAccessStatus(context, item).equals(DefaultAccessStatusHelper.OPEN_ACCESS)) {
+                if (item.isArchived()) {
+                    if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
+                        addBitstream(bts, context, item.getID().toString(), item.getName(), item.getHandle(), item.getOwningCollection().getID().toString());
+                    }
                 }
             }
-        } else if ( subjectType == Constants.ITEM && eventType == Event.MODIFY && detail != null && detail.equals("WITHDRAW")) {
+        }
+        else if ( subjectType == Constants.ITEM && eventType == Event.MODIFY && detail != null && detail.equals("WITHDRAW")) {
 
             // Un item est retiré, on retire les images de l'index CLIP
             Item item = (Item)event.getSubject(context);
@@ -140,7 +162,8 @@ public class ClipConsumer implements Consumer {
                     }
                 }
             }
-        } else if ( subjectType == Constants.BITSTREAM && eventType == Event.DELETE ) {
+        }
+        else if ( subjectType == Constants.BITSTREAM && eventType == Event.DELETE ) {
 
             // Un Bitstream est supprimé, soit lui-même soit parce que son Item l'est
             // On n'a pas nécessairement beaucoup de contexte (bundle, ...), donc on va
