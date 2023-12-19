@@ -32,6 +32,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 public class ClipConsumer implements Consumer {
@@ -60,33 +61,33 @@ public class ClipConsumer implements Consumer {
     }
 
     /*
-     * 
+     *
      * Dépôt d'un document, première étape (avant de cliquer "Déposer").
      * On a un EventType=CREATE, SubjectType=BITSTREAM. Mais à ce moment, item.isArchived()
      * est false. D'ailleurs on n'a pas encore son nom.
      * Une fois qu'on clique sur "Déposer", on n'a pas de CREATE sur le Bitstream, on a des
      * MODIFY, mais on a un INSTALL pour l'Item, donc on doit réagir sur cet événement
      * et associer tous les Bitstream à ce moment.
-     * 
+     *
      * Si on ajoute un Bitstream à un Item, on a un EventType=CREATE, SubjectType=BITSTREAM
      * et on a un item.isArchived() = true, et son nom, donc on peut l'ajouter.
-     * 
+     *
      * Si on retire un Bitstream à un Item, on a un EventType=DELETE, SubjectType=BITSTREAM,
      * donc on peut le supprimer de l'index CLIP.
-     * 
+     *
      * Si on édite un bitstream, on peut seulement modifier ses métadonnées, donc aucun impact
      * sur l'indexation CLIP.
-     * 
+     *
      * Si on retire (withdraw) un item, on n'a pas de CREATE/DELETE sur les Bitstream. On doit donc
      * réagir sur le EventType=MODIFY, SubjectType=ITEM, detail="WITHDRAW" pour supprimer
      * tous les Bitstream de CLIP.
-     * 
+     *
      * Si on réintègre un item, on n'a pas de CREATE/DELETE sur les Bitstream, on doit donc
      * réagir sur le EventType=MODIFY, SubjectType=ITEM, detail="REINSTATE".
-     * 
+     *
      * Si on supprime un item, on aura des DELETE sur les Bitstream, on peut réagir
      * là-dessus.
-     * 
+     *
      * TODO: il reste à observer et gérer les événements suivants:
      * - on déplace un item dans une autre collection
      * - on modifie le dc:title d'un item (donc getName()): mais on n'a pas cet événement spécifique,
@@ -104,8 +105,8 @@ public class ClipConsumer implements Consumer {
         int eventType = event.getEventType();
         String detail = event.getDetail();
 
-        if ( 
-            ( subjectType == Constants.ITEM && (eventType == Event.INSTALL || (eventType == Event.MODIFY && detail != null && detail.equals("REINSTATE"))) ) 
+        if (
+            ( subjectType == Constants.ITEM && (eventType == Event.INSTALL || (eventType == Event.MODIFY && detail != null && detail.equals("REINSTATE"))) )
             ||
             ( subjectType == Constants.COLLECTION && eventType == Event.ADD ) ) {
 
@@ -206,7 +207,7 @@ public class ClipConsumer implements Consumer {
         String url = clipServerUrl + endpoint;
         HttpUriRequest req;
 
-        // On construit la requête 
+        // On construit la requête
         switch (method) {
             case "POST":
                 req = RequestBuilder.post(url)
@@ -237,9 +238,22 @@ public class ClipConsumer implements Consumer {
         HttpResponse response = client.execute(req);
 
         // On log la réponse s'il y a erreur
-        if (response.getStatusLine().getStatusCode() != 200)
-            log.error(response.getStatusLine().getStatusCode() + " / " + response.getStatusLine().getReasonPhrase());
+        if (response.getStatusLine().getStatusCode() != 200) {
+            handleClipResponse(response);
+        }
+    }
 
+    // Méthode pour traiter la réponse de l'API CLIP et gérer les erreurs de validation
+    private void handleClipResponse(HttpResponse response) throws IOException {
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode == 422) {
+            // Erreur de validation
+            String responseBody = EntityUtils.toString(response.getEntity());
+            throw new IOException("Clip API Error: " + statusCode + ", " + responseBody);
+        } else if (statusCode != 200) {
+            // Gérer d'autres erreurs ici si nécessaire
+            log.error(statusCode + " / " + response.getStatusLine().getReasonPhrase());
+        }
     }
 
     @Override
@@ -265,7 +279,7 @@ public class ClipConsumer implements Consumer {
         private String itemName = null;
         private String collectionId = null;
         private String content = null;
-    
+
         // Une image avec toutes ses propriétés
         public ClipImage(String uuid, String itemId, String itemName, String itemHandle, String itemCollectionId, String content) {
             setUuid(uuid);
@@ -275,7 +289,7 @@ public class ClipConsumer implements Consumer {
             setCollectionId(itemCollectionId);
             setContent(content);
         }
-    
+
         // L'identifiant
         public String getUuid() {
             return this.uuid;
@@ -283,7 +297,7 @@ public class ClipConsumer implements Consumer {
         public void setUuid(String id) {
             this.uuid = id;
         }
-    
+
         // L'identifiant de l'item
         public String getItemId() {
             return this.itemId;
@@ -291,7 +305,7 @@ public class ClipConsumer implements Consumer {
         public void setItemId(String id) {
             this.itemId = id;
         }
-    
+
         // Le titre de l'item
         public String getItemName() {
             return this.itemName;
@@ -299,7 +313,7 @@ public class ClipConsumer implements Consumer {
         public void setItemName(String name) {
             this.itemName = name;
         }
-    
+
         // Le handle de l'item
         public String getItemHandle() {
             return this.itemHandle;
@@ -307,7 +321,7 @@ public class ClipConsumer implements Consumer {
         public void setItemHandle(String handle) {
             this.itemHandle = handle;
         }
-    
+
         // La collection
         public String getCollectionId() {
             return this.collectionId;
@@ -315,7 +329,7 @@ public class ClipConsumer implements Consumer {
         public void setCollectionId(String id) {
             this.collectionId = id;
         }
-    
+
         // Le contenu (en base64)
         public String getContent() {
             return this.content;
@@ -323,6 +337,6 @@ public class ClipConsumer implements Consumer {
         public void setContent(String content) {
             this.content = content;
         }
-    
-    }   
+
+    }
 }
