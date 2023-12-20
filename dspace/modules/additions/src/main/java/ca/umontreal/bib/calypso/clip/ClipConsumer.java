@@ -104,6 +104,7 @@ public class ClipConsumer implements Consumer {
         int subjectType = event.getSubjectType();
         int eventType = event.getEventType();
         String detail = event.getDetail();
+        log.info("Consume additions: eventType " + eventType);
 
         if (
             ( subjectType == Constants.ITEM && (eventType == Event.INSTALL || (eventType == Event.MODIFY && detail != null && detail.equals("REINSTATE"))) )
@@ -239,9 +240,9 @@ public class ClipConsumer implements Consumer {
 
         // On log la réponse s'il y a erreur
         if (response.getStatusLine().getStatusCode() != 200) {
-            handleClipResponse(response);
-        }
-    }
+                handleClipResponse(response);
+            }
+     }
 
     // Méthode pour traiter la réponse de l'API CLIP et gérer les erreurs de validation
     private void handleClipResponse(HttpResponse response) throws IOException {
