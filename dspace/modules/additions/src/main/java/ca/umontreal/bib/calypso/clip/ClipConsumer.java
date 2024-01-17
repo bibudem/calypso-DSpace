@@ -131,7 +131,7 @@ public class ClipConsumer implements Consumer {
                     // On ignore le bundle THUMBNAIL et le bundle LICENCE
                     if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
                         for (Bitstream bts: bdl.getBitstreams()) {
-                            addBitstream(bts, context, itemId, itemName, itemHandle, itemCollectionId);
+                            actionBitstream(bts, context, itemId, itemName, itemHandle, itemCollectionId,"POST");
                         }
                     }
                 }
@@ -145,14 +145,15 @@ public class ClipConsumer implements Consumer {
             Bundle bdl = bts.getBundles().get(0);
             Item item = bdl.getItems().get(0);
             if (accessStatusService.getAccessStatus(context, item).equals(DefaultAccessStatusHelper.OPEN_ACCESS)) {
-                if (item.isArchived()) {
+                if ( item.isArchived()) {
                     if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
-                        addBitstream(bts, context, item.getID().toString(), item.getName(), item.getHandle(), item.getOwningCollection().getID().toString());
+                        actionBitstream(bts, context, item.getID().toString(), item.getName(), item.getHandle(), item.getOwningCollection().getID().toString(),"POST");
                     }
                 }
             }
         }
-        else if ( subjectType == Constants.ITEM && eventType == Event.MODIFY && detail != null && detail.equals("WITHDRAW")) {
+
+        else if ( subjectType == Constants.BITSTREAM && eventType == Event.MODIFY && detail != null && detail.equals("WITHDRAW")) {
 
             // Un item est retiré, on retire les images de l'index CLIP
             Item item = (Item)event.getSubject(context);
@@ -165,6 +166,7 @@ public class ClipConsumer implements Consumer {
                 }
             }
         }
+
         else if ( subjectType == Constants.BITSTREAM && eventType == Event.DELETE ) {
 
             // Un Bitstream est supprimé, soit lui-même soit parce que son Item l'est
@@ -174,10 +176,28 @@ public class ClipConsumer implements Consumer {
             deleteBitstream(bts, context);
         }
 
+         else if (subjectType == Constants.BITSTREAM && eventType == Event.MODIFY) {
+                // Mise à jour d'un Bitstream, utilisez l'événement comme nécessaire
+                log.info("Consume MODIFY_METADATA " + eventType);
+                Item item = (Item) event.getSubject(context);
+                log.info("Consume MODIFY_METADATA2 " + item.getID().toString());
+                // la mise à jour du Bitstream ici...
+                if (accessStatusService.getAccessStatus(context, item).equals(DefaultAccessStatusHelper.OPEN_ACCESS)) {
+                    for (Bundle bdl : item.getBundles()) {
+                        // On ignore le bundle THUMBNAIL et le bundle LICENCE
+                        if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
+                            for (Bitstream bts : bdl.getBitstreams()) {
+                                actionBitstream(bts, context, item.getID().toString(), item.getName(), item.getHandle(), item.getOwningCollection().getID().toString(), "PUT");
+                            }
+                        }
+                    }
+                }
+         }
+
     }
 
     // Ajout (si nécessaire) d'un Bitstream
-    private void addBitstream(Bitstream bts, Context context, String itemId, String itemName, String itemHandle, String itemCollectionId) throws IOException, SQLException, AuthorizeException {
+    private void actionBitstream(Bitstream bts, Context context, String itemId, String itemName, String itemHandle, String itemCollectionId, String method) throws IOException, SQLException, AuthorizeException {
 
         // Pour l'instant on suppose qu'on supporte tout ce qui est une image
         String mimeType = bts.getFormat(context).getMIMEType();
@@ -194,7 +214,7 @@ public class ClipConsumer implements Consumer {
             ClipImage img = new ClipImage(uuid, itemId, itemName, itemHandle, itemCollectionId, content);
             String imgJson = mapper.writeValueAsString(img);
             String endpoint = "/" + uuid;
-            sendClipRequest(endpoint, "POST", imgJson);
+            sendClipRequest(endpoint, method, imgJson);
         }
     }
 
