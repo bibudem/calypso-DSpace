@@ -27,5 +27,23 @@
     </scope_note>
   </dc-type>
 
+  <dc-type>
+    <schema>calypso</schema>
+    <element>vedette</element>
+    <qualifier></qualifier>
+    <scope_note>
+      Utilisé pour les éléments identifiés comme étant des vedettes global.
+    </scope_note>
+  </dc-type>
+
+  <dc-type>
+    <schema>calypso</schema>
+    <element>vedettecoll</element>
+    <qualifier></qualifier>
+    <scope_note>
+      Utilisé pour les éléments identifiés comme étant des vedettes dans une collection donnée.
+    </scope_note>
+  </dc-type>
+
 
 </dspace-dc-types>
