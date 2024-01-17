@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<!--
+  - calypso-types.xml
+  -
+  - Des métdonnées locales pour Calypso.
+  - 
+  -->
+<dspace-dc-types>
+
+  <dspace-header>
+    <title>Registre des métadonnées spécifiques à Calypso</title>
+    <description>Ces métadonnées sont utilisées dans les cas où il n'y a pas d'équivalent Dublin Core.
+    </description>
+  </dspace-header>
+
+  <dc-schema>
+    <name>calypso</name>
+    <namespace>http://calypso.bib.umontreal.ca/</namespace>
+  </dc-schema>
+
+  <dc-type>
+    <schema>calypso</schema>
+    <element>contentdmurl</element>
+    <qualifier></qualifier>
+    <scope_note>
+      Utilisé pour la redirection vers l'URL de l'item retrouvé par son ancien ID Calypso
+    </scope_note>
+  </dc-type>
+
+  <dc-type>
+    <schema>calypso</schema>
+    <element>vedette</element>
+    <qualifier></qualifier>
+    <scope_note>
+      Utilisé pour les éléments identifiés comme étant des vedettes global.
+    </scope_note>
+  </dc-type>
+
+  <dc-type>
+    <schema>calypso</schema>
+    <element>vedettecoll</element>
+    <qualifier></qualifier>
+    <scope_note>
+      Utilisé pour les éléments identifiés comme étant des vedettes dans une collection donnée.
+    </scope_note>
+  </dc-type>
+
+
+</dspace-dc-types>
