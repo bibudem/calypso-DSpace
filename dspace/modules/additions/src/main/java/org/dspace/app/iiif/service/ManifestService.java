@@ -29,6 +29,7 @@ import org.dspace.content.MetadataValue;
 import org.dspace.content.service.ItemService;
 import org.dspace.core.Context;
 import org.dspace.services.ConfigurationService;
+import org.dspace.util.FrontendUrlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
@@ -83,6 +84,9 @@ public class ManifestService extends AbstractResourceService {
 
     @Autowired
     MetadataExposureService metadataExposureService;
+
+    @Autowired
+    FrontendUrlService frontendUrlService;
 
     protected String[] METADATA_FIELDS;
     protected String RENDERING_BUNDLE_NAME;
@@ -308,77 +312,84 @@ public class ManifestService extends AbstractResourceService {
         }
     }
 
-    private void addRendering(Item item, Context context) {
-        if (RENDERING_BUNDLE_NAME != null) {
-            List<Bundle> bundles = item.getBundles();
-            if ( bundles != null ) {
-                for (Bundle bundle : bundles) {
-                    if ( bundle.getName().equals(RENDERING_BUNDLE_NAME) )
-                    {
-                        addRenderingFromConfigBundle(item, context, bundle);
-                    }
-                }
-            }
-        }
-        else {
-            addRenderingFromIIIFBundles(item, context);
-        }
-    }
-
-    private void addRenderingFromConfigBundle(Item item, Context context, Bundle bundle) {
-        if (item != null && context != null && bundle != null ) {
-            List<Bitstream> bitstreams = bundle.getBitstreams();
-            for (Bitstream bitstream : bitstreams) {
-                String mimeType = null;
-                try {
-                    mimeType = bitstream.getFormat(context).getMIMEType();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-                if (mimeType != null) {
-                    String id = BITSTREAM_PATH_PREFIX + "/" + bitstream.getID() + "/content";
-                    manifestGenerator.addRendering(
-                        new ExternalLinksGenerator(id)
-                            .setLabel(utils.getIIIFLabel(bitstream, bitstream.getName()))
-                            .setFormat(mimeType)
-                    );
-                }
-            }
-        }
-    }
-
     /**
-     * This method looks for a PDF in the Item's ORIGINAL bundle and adds
-     * it as the Rendering resource if found.
+     * This method will add a "rendering" property to the root of the
+     * manifest. It will either look within IIIF bundles for PDF files
+     * (legacy method) or look for file within a bundled named according
+     * to the iiif.rendering.bundle configuration (new method).
+     * 
+     * It will also add a link to the item display in DSpace if the
+     * iiif.rendering.item configuration is set.
      *
      * @param item DSpace Item
      * @param context DSpace context
      */
-    private void addRenderingFromIIIFBundles(Item item, Context context) {
-        List<Bundle> bundles = utils.getIIIFBundles(item);
-        for (Bundle bundle : bundles) {
-            List<Bitstream> bitstreams = bundle.getBitstreams();
-            for (Bitstream bitstream : bitstreams) {
-                String mimeType = null;
-                try {
-                    mimeType = bitstream.getFormat(context).getMIMEType();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+    private void addRendering(Item item, Context context) {
+        // First get the correct bundles to look for bitstreams
+        List<Bundle> bdls = new ArrayList<Bundle>();
+        String bitstreamType = null;
+        if (RENDERING_BUNDLE_NAME != null) {
+            // New method: add files within the specified bundle
+            List<Bundle> bundles = item.getBundles();
+            if ( bundles != null ) {
+                for (Bundle bundle : bundles) {
+                    if ( bundle.getName().equals(RENDERING_BUNDLE_NAME) ) bdls.add(bundle);
                 }
-                // If the  bundle contains a PDF, assume that it represents the
-                // item and add to rendering. Ignore other mime-types. Other options
-                // might be using the primary bitstream or relying on a bitstream metadata
-                // field, e.g. iiif.rendering
-                if (mimeType != null && mimeType.contentEquals("application/pdf")) {
-                    String id = BITSTREAM_PATH_PREFIX + "/" + bitstream.getID() + "/content";
-                    manifestGenerator.addRendering(
-                        new ExternalLinksGenerator(id)
-                            .setLabel(utils.getIIIFLabel(bitstream, bitstream.getName()))
-                            .setFormat(mimeType)
-                    );
+            }
+        }
+        else {
+            // Legacy method: get the IIIF Bundles
+            bdls.addAll(utils.getIIIFBundles(item));
+            bitstreamType = "application/pdf";
+        }
+        // We can add the bitstreams
+        addRenderingFromBundles(item, context, bdls, bitstreamType);
+
+        // We next add a rendering towards the item display in
+        // DSpace if iiif.rendering.item is set.
+        if (RENDERING_ITEM_LABEL != null && !RENDERING_ITEM_LABEL.contentEquals("")) {
+            manifestGenerator.addRendering(
+                new ExternalLinksGenerator(frontendUrlService.generateUrl(context, item) + "/full")
+                    .setLabel(RENDERING_ITEM_LABEL)
+                    .setFormat("text/html")
+            );
+        }
+    }
+
+    /**
+     * Adds a rendering to the manifest with links to the bitstreams within
+     * the specified bundles.
+     * 
+     * This is the new method for adding a rendering.
+     * 
+     * @param item          DSpace item for the manifest
+     * @param context       DSpace context
+     * @param bundles       The list of item bundles where to look for bitstreams
+     * @param bitstreamType The content type of bitstreams to include (if null, all bitstreams)
+     */
+    private void addRenderingFromBundles(Item item, Context context, List<Bundle> bundles, String bitstreamType) {
+        if (item != null && context != null && bundles != null ) {
+            for (Bundle bundle : bundles) {
+                List<Bitstream> bitstreams = bundle.getBitstreams();
+                for (Bitstream bitstream : bitstreams) {
+                    String mimeType = null;
+                    try {
+                        mimeType = bitstream.getFormat(context).getMIMEType();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    // We add the bitstream if either the requested type is not specified (all bitstreams)
+                    // or the bitstream type equals the requested type
+                    if (mimeType != null && ( (bitstreamType == null) || bitstreamType.equals(mimeType) ) ) {
+                        String id = BITSTREAM_PATH_PREFIX + "/" + bitstream.getID() + "/content";
+                        manifestGenerator.addRendering(
+                            new ExternalLinksGenerator(id)
+                                .setLabel(utils.getIIIFLabel(bitstream, bitstream.getName()))
+                                .setFormat(mimeType)
+                        );
+                    }
                 }
             }
         }
     }
-
 }
