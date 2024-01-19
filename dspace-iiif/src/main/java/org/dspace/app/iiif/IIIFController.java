@@ -48,7 +48,7 @@ public class IIIFController {
      * @param id DSpace Item uuid
      * @return manifest as JSON
      */
-    @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest")
+    @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest", produces = "application/json")
     public String findOne(@PathVariable UUID id) {
         Context context = ContextUtil.obtainCurrentRequestContext();
         return iiifFacade.getManifest(context, id);
@@ -70,7 +70,7 @@ public class IIIFController {
      * @param query query terms
      * @return AnnotationList as JSON
      */
-    @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest/search")
+    @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest/search", produces = "application/json")
     public String searchInManifest(@PathVariable UUID id,
                                    @RequestParam(name = "q") String query) {
         Context context = ContextUtil.obtainCurrentRequestContext();
@@ -88,7 +88,7 @@ public class IIIFController {
      * @param id DSpace Item uuid
      * @return AnnotationList as JSON
      */
-    @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest/seeAlso")
+    @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest/seeAlso", produces = "application/json")
     public String findSeeAlsoList(@PathVariable UUID id) {
         Context context = ContextUtil.obtainCurrentRequestContext();
         return iiifFacade.getSeeAlsoAnnotations(context, id);
@@ -106,7 +106,7 @@ public class IIIFController {
      * @param cid canvas identifier
      * @return canvas as JSON
      */
-    @RequestMapping(method = RequestMethod.GET, value = "/{id}/canvas/{cid}")
+    @RequestMapping(method = RequestMethod.GET, value = "/{id}/canvas/{cid}", produces = "application/json")
     public String findCanvas(@PathVariable UUID id, @PathVariable String cid) {
         Context context = ContextUtil.obtainCurrentRequestContext();
         return iiifFacade.getCanvas(context, id, cid);
