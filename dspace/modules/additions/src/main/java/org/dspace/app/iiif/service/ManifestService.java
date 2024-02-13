@@ -145,7 +145,7 @@ public class ManifestService extends AbstractResourceService {
         manifestGenerator.addSequence(
                 sequenceService.getSequence(item));
         addRendering(item, context);
-        addSeeAlso(item);
+        addSeeAlso(item, context);
     }
 
     /**
@@ -263,14 +263,20 @@ public class ManifestService extends AbstractResourceService {
     }
 
     /**
-     * This method adds into the manifest a {@code seeAlso} reference to additional
+     * This method adds into the manifest one or more {@code seeAlso} reference to additional
      * resources found in the Item bundle(s). A typical use case would be METS / ALTO files
      * that describe the resource.
      *
      * @param item the DSpace Item.
+     * @param contest The DSpace context
      */
-    private void addSeeAlso(Item item) {
-        manifestGenerator.addSeeAlso(seeAlsoService.getSeeAlso(item));
+    private void addSeeAlso(Item item, Context context) {
+        // There may be more than one for this item
+        List<ExternalLinksGenerator> elgs = seeAlsoService.getSeeAlsos(item, context);
+        // We add the list of seeAlsos generated
+        for (ExternalLinksGenerator elg: elgs ) {
+            manifestGenerator.addSeeAlso(elg);
+        }
     }
 
     /**
