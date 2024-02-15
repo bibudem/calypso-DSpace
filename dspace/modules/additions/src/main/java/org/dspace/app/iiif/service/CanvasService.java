@@ -34,6 +34,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
+import de.digitalcollections.iiif.model.sharedcanvas.AnnotationList;
+
 /**
  * This service provides methods for creating {@code Canvases}. There should be a single instance of
  * this service per request. The {@code @RequestScope} provides a single instance created and available during
@@ -53,6 +55,9 @@ public class CanvasService extends AbstractResourceService {
 
     @Autowired
     CanvasSeeAlsoService canvasSeeAlsoService;
+
+    @Autowired
+    CanvasTranscriptionsService canvasTranscriptionsService;
 
     @Autowired
     IIIFUtils utils;
@@ -199,11 +204,12 @@ public class CanvasService extends AbstractResourceService {
                 thumbUtil.getThumbnailProfile(), THUMBNAIL_PATH);
 
         List<ExternalLinksGenerator> canvasSeeAlso = canvasSeeAlsoService.getCanvasSeeAlso(context, item, bitstream);
+        AnnotationList canvasTranscriptions = canvasTranscriptionsService.getCanvasTranscriptions(context, item, bitstream, IIIF_ENDPOINT + manifestId + "/" + bitstreamId + "/c" + count + "/transcriptions");
 
         return addMetadata(context, bitstream,
                 new CanvasGenerator(IIIF_ENDPOINT + manifestId + "/canvas/c" + count)
                     .addImage(image.generateResource()).addThumbnail(thumb.generateResource()).setHeight(canvasHeight)
-                    .setWidth(canvasWidth).setLabel(label).addSeeAlso(canvasSeeAlso));
+                    .setWidth(canvasWidth).setLabel(label).addSeeAlso(canvasSeeAlso)).addTranscriptions(canvasTranscriptions);
     }
 
     /**
