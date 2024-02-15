@@ -6,8 +6,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.ArrayList;
 
-import org.dspace.app.iiif.model.generator.AnnotationGenerator;
 import org.dspace.app.iiif.model.generator.ExternalLinksGenerator;
+import org.dspace.app.iiif.service.utils.IIIFUtils;
 import org.dspace.content.Bitstream;
 import org.dspace.content.Bundle;
 import org.dspace.content.Item;
@@ -84,14 +84,13 @@ public class CanvasSeeAlsoService extends AbstractResourceService {
         if ( seeAlsoBundle == null ) return links;
 
         // Check if we have a bitstream with a correct name
-        String name = getRootName(bitstream.getName());
+        String name = IIIFUtils.getRootName(bitstream.getName());
         List<Bitstream> bts = seeAlsoBundle.getBitstreams();
         for ( Bitstream bt: bts ) {
-            if ( name.equals(getRootName(bt.getName()))) {
+            if ( name.equals(IIIFUtils.getRootName(bt.getName()))) {
                 try {
                     links.add(new ExternalLinksGenerator(BITSTREAM_PATH_PREFIX + "/" + bt.getID() + "/content")
                             .setFormat(bt.getFormat(context).getMIMEType())
-//                            .setType(AnnotationGenerator.TYPE)
                             .setLabel(SEEALSO_LABEL)
                             .setProfile(SEEALSO_PROFILE));
                 }
@@ -100,19 +99,4 @@ public class CanvasSeeAlsoService extends AbstractResourceService {
         }
         return links;
     }
-
-    /**
-     * Check a String (filename) and returns the portion before the last occurrence of "."
-     * @param name  The String to check
-     * @return  The portion before ".", or the string itself if not found
-     */
-    private String getRootName(String name) {
-        String root = name;
-        int dotPos = root.lastIndexOf(".");
-        if (dotPos > 0) {
-            root = name.substring(0, dotPos);
-        }
-        return root;
-    }
-
 }
