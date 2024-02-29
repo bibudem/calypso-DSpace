@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public interface RestModel extends Serializable {
 
     public static final String ROOT = "root";
+    public static final String CONTENT_REPORT = "contentreport";
     public static final String CORE = "core";
     public static final String EPERSON = "eperson";
     public static final String DISCOVER = "discover";
@@ -33,6 +34,7 @@ public interface RestModel extends Serializable {
     public static final String VERSIONING = "versioning";
     public static final String AUTHENTICATION = "authn";
     public static final String TOOLS = "tools";
+    public static final String LDN = "ldn";
     public static final String PID = "pid";
 
     public String getType();
