@@ -46,6 +46,9 @@ public class ClipConsumer implements Consumer {
     // L'URL de notre serveur CLIP
     private String clipServerUrl;
 
+    //bundle accepter a etre indexer avec Clip
+    private String bundleAccept;
+
     // Un objet pour produire du Json
     private ObjectMapper mapper;
 
@@ -56,6 +59,7 @@ public class ClipConsumer implements Consumer {
     @Override
     public void initialize() throws Exception {
         clipServerUrl = DSpaceServicesFactory.getInstance().getConfigurationService().getProperty("calypso.clip.server.url");
+        bundleAccept = DSpaceServicesFactory.getInstance().getConfigurationService().getProperty("calypso.clip.bundle.execute");
         mapper = new ObjectMapper();
         accessStatusService = AccessStatusServiceFactory.getInstance().getAccessStatusService();
     }
@@ -105,6 +109,7 @@ public class ClipConsumer implements Consumer {
         int eventType = event.getEventType();
         String detail = event.getDetail();
         log.info("Consume additions: eventType " + eventType);
+        log.info("Bundle " + bundleAccept);
 
         if (
             ( subjectType == Constants.ITEM && (eventType == Event.INSTALL || (eventType == Event.MODIFY && detail != null && detail.equals("REINSTATE"))) )
@@ -128,8 +133,8 @@ public class ClipConsumer implements Consumer {
                 // On va faire une boucle sur ses Bundle puis ses Bitstream en traitant
                 // uniquement ceux qui nous intéressent (les images)
                 for (Bundle bdl: item.getBundles()) {
-                    // On ignore le bundle THUMBNAIL et le bundle LICENCE
-                    if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
+                    // On prendre en consideration que les images de bundle ORIGINAL
+                    if (bdl.getName().equals(bundleAccept)) {
                         for (Bitstream bts: bdl.getBitstreams()) {
                             addBitstream(bts, context, itemId, itemName, itemHandle, itemCollectionId);
                         }
@@ -142,12 +147,14 @@ public class ClipConsumer implements Consumer {
             // On a l'ajout d'un Bitstream, mais on le traite uniquement si l'item est déjà
             // archivé. Ça correspond à ajouter un Bitstream à un item existant.
             Bitstream bts = (Bitstream)event.getSubject(context);
-            Bundle bdl = bts.getBundles().get(0);
-            Item item = bdl.getItems().get(0);
-            if (accessStatusService.getAccessStatus(context, item).equals(DefaultAccessStatusHelper.OPEN_ACCESS)) {
-                if (item.isArchived()) {
-                    if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
-                        addBitstream(bts, context, item.getID().toString(), item.getName(), item.getHandle(), item.getOwningCollection().getID().toString());
+            if (bts != null) {
+                Bundle bdl = bts.getBundles().get(0);
+                Item item = bdl.getItems().get(0);
+                if (accessStatusService.getAccessStatus(context, item).equals(DefaultAccessStatusHelper.OPEN_ACCESS)) {
+                    if (item.isArchived()) {
+                        if (bdl.getName().equals(bundleAccept)) {
+                            addBitstream(bts, context, item.getID().toString(), item.getName(), item.getHandle(), item.getOwningCollection().getID().toString());
+                        }
                     }
                 }
             }
@@ -157,8 +164,8 @@ public class ClipConsumer implements Consumer {
             // Un item est retiré, on retire les images de l'index CLIP
             Item item = (Item)event.getSubject(context);
             for (Bundle bdl: item.getBundles()) {
-                // On ignore le bundle THUMBNAIL et le bundle LICENCE
-                if (!(bdl.getName().equals("THUMBNAIL") || bdl.getName().equals("LICENCE"))) {
+                // On prendre en consideration que les images de bundle ORIGINAL
+                if ( bdl.getName().equals(bundleAccept)) {
                     for (Bitstream bts: bdl.getBitstreams()) {
                         deleteBitstream(bts, context);
                     }

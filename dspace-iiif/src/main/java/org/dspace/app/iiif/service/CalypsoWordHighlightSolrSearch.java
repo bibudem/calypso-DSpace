@@ -48,7 +48,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class CalypsoWordHighlightSolrSearch implements SearchAnnotationService {
 
-    private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(CalypsoWordHighlightSolrSearch.class);
+    private static final Logger log = org.apache.logging.log4j.LogManager
+                .getLogger(CalypsoWordHighlightSolrSearch.class);
 
     private String endpoint;
     private String manifestId;
@@ -127,7 +128,8 @@ public class CalypsoWordHighlightSolrSearch implements SearchAnnotationService {
      */
     private SolrQuery getSolrQuery(String query, String manifestId) {
         SolrQuery solrQuery = new SolrQuery();
-        solrQuery.set("q", "ocr_text:" + query + " AND manifest_url:\"" + manifestId + "\"");
+        solrQuery.set("q", "ocr_text:" + query +
+                    " AND manifest_url:\"" + manifestId + "\"");
         solrQuery.set(CommonParams.WT, "json");
         solrQuery.set("hl", "true");
         solrQuery.set("hl.ocr.fl", "ocr_text");
