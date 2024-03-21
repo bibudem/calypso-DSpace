@@ -108,8 +108,7 @@ public class ClipConsumer implements Consumer {
         int subjectType = event.getSubjectType();
         int eventType = event.getEventType();
         String detail = event.getDetail();
-        log.info("Consume additions: eventType " + eventType);
-        log.info("Bundle " + bundleAccept);
+        //log.info("Consume additions: eventType " + eventType);
 
         if (
             ( subjectType == Constants.ITEM && (eventType == Event.INSTALL || (eventType == Event.MODIFY && detail != null && detail.equals("REINSTATE"))) )
