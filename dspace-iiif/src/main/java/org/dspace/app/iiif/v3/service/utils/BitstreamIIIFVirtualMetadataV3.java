@@ -19,7 +19,7 @@ import org.dspace.core.Context;
  * @author Andrea Bollini (andrea.bollini at 4science.it)
  *
  */
-public interface BitstreamIIIFV3VirtualMetadata {
+public interface BitstreamIIIFVirtualMetadataV3 {
     public final String IIIF_BITSTREAM_VIRTUAL_METADATA_BEAN_PREFIX = "iiif.bitstream.";
 
     List<String> getValues(Context context, Bitstream bitstream);

@@ -12,7 +12,7 @@ import de.digitalcollections.iiif.model.sharedcanvas.Resource;
 /**
  * Interface for iiif resource generators.
  */
-public interface IIIFV3Resource {
+public interface IIIFResource {
 
     /**
      * Creates and returns a resource model.
