@@ -31,8 +31,9 @@ import org.springframework.stereotype.Service;
  * @author Michael Spalti  mspalti@willamette.edu
  * @author Andrea Bollini (andrea.bollini at 4science.it)
  */
-@Service
-public class IIIFV3ServiceFacade {
+
+@Service("IIIFServiceFacadeV3")
+public class IIIFServiceFacade {
 
     @Autowired
     ItemService itemService;
