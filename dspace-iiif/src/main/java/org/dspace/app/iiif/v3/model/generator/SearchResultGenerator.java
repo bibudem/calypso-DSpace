@@ -24,7 +24,7 @@ import org.springframework.web.context.annotation.RequestScope;
  */
 @RequestScope
 @Component("searchResultGeneratorV3")
-public class SearchResultGenerator implements IIIFV3Resource {
+public class SearchResultGenerator implements IIIFResourceV3 {
 
     private String identifier;
     private final List<Annotation> annotations = new ArrayList<>();

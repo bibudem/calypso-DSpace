@@ -29,7 +29,7 @@ import org.dspace.app.iiif.v3.service.RangeService;
  * @author Michael Spalti  mspalti@willamette.edu
  * @author Andrea Bollini (andrea.bollini at 4science.it)
  */
-public class RangeGenerator implements IIIFV3Resource {
+public class RangeGenerator implements IIIFResourceV3 {
 
     private String identifier;
     private String label;

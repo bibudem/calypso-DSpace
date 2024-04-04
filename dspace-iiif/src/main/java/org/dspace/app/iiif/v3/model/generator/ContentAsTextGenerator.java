@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  */
 @Scope("prototype")
 @Component("contentAsTextGeneratorV3")
-public class ContentAsTextGenerator implements IIIFV3Resource {
+public class ContentAsTextGenerator implements IIIFResourceV3 {
 
     private String text;
 

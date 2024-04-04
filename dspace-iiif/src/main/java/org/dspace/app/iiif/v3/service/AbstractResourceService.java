@@ -40,7 +40,7 @@ public abstract class AbstractResourceService {
     protected static String DOCUMENT_VIEWING_HINT;
 
     // Paths for IIIF Image API requests.
-    protected static final String THUMBNAIL_PATH = "/full/90,/0/default.jpg";
+    protected static final String THUMBNAIL_PATH = "/full/1003,/0/default.jpg";
     protected static final String IMAGE_PATH =     "/full/full/0/default.jpg";
     // Default canvas dimensions.
     protected static Integer defaultCanvasWidthFallback = 2200;
@@ -64,7 +64,7 @@ public abstract class AbstractResourceService {
      */
     protected void setConfiguration(ConfigurationService configurationService) {
         this.configurationService = configurationService;
-        IIIF_ENDPOINT = configurationService.getProperty("dspace.server.url") + "/iiif/";
+        IIIF_ENDPOINT = configurationService.getProperty("dspace.server.url") + "/iiif/v3/";
         IMAGE_SERVICE = configurationService.getProperty("iiif.image.server");
         SEARCH_URL = configurationService.getProperty("iiif.search.url");
         BITSTREAM_PATH_PREFIX = configurationService.getProperty("dspace.server.url") + "/api/core/bitstreams";

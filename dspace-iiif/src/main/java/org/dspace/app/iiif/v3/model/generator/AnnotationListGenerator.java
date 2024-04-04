@@ -27,7 +27,7 @@ import org.springframework.web.context.annotation.RequestScope;
  */
 @RequestScope
 @Component("annotationListGeneratorV3")
-public class AnnotationListGenerator implements IIIFV3Resource {
+public class AnnotationListGenerator implements IIIFResourceV3 {
 
     private String identifier;
     private List<Annotation> annotations = new ArrayList<>();

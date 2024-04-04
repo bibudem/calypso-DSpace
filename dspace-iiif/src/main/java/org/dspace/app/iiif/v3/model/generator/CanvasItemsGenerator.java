@@ -31,7 +31,7 @@ import org.springframework.web.context.annotation.RequestScope;
  */
 @RequestScope
 @Component("canvasItemsGeneratorV3")
-public class CanvasItemsGenerator implements IIIFV3Resource {
+public class CanvasItemsGenerator implements IIIFResourceV3 {
 
     private String identifier;
     private final List<Canvas> canvas = new ArrayList<>();

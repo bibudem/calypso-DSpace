@@ -27,7 +27,7 @@ public class ThumbProfileUtil {
      */
     public ProfileGenerator getThumbnailProfile() throws
             RuntimeException {
-        profile.setIdentifier("http://iiif.io/api/image/2/level0.json");
+        profile.setIdentifier("http://iiif.io/api/image/3/level0.json");
         return profile;
     }
 

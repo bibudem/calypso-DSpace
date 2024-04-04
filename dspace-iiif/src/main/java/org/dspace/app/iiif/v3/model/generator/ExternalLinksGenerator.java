@@ -19,7 +19,7 @@ import de.digitalcollections.iiif.model.sharedcanvas.Resource;
  * This is the type for related content resources. Used in the "related", "renderings" and
  * "seeAlso" fields of IIIF resources.
  */
-public class ExternalLinksGenerator implements IIIFV3Resource {
+public class ExternalLinksGenerator implements IIIFResourceV3 {
 
     private final String identifier;
     private String format;

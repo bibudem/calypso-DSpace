@@ -21,8 +21,8 @@ import org.springframework.stereotype.Component;
  * @author Andrea Bollini (andrea.bollini at 4science.it)
  *
  */
-@Component(BitstreamIIIFV3VirtualMetadata.IIIF_BITSTREAM_VIRTUAL_METADATA_BEAN_PREFIX + "V3" + "bytes")
-public class BitstreamBytesIIIFVirtualMetadata implements BitstreamIIIFV3VirtualMetadata {
+@Component(BitstreamIIIFVirtualMetadataV3.IIIF_BITSTREAM_VIRTUAL_METADATA_BEAN_PREFIX + "bytes")
+public class BitstreamBytesIIIFVirtualMetadata implements BitstreamIIIFVirtualMetadataV3 {
 
     @Override
     public List<String> getValues(Context context, Bitstream bitstream) {
