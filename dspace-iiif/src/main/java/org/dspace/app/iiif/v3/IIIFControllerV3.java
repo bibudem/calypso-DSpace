@@ -26,14 +26,14 @@ import org.springframework.web.bind.annotation.RestController;
  * @author Michael Spalti  mspalti@willamette.edu
  * @author Andrea Bollini (andrea.bollini at 4science.it)
  */
-@RestController("IIIFControllerV3")
+@RestController
 @RequestMapping("/iiif/v3")
 // Only enable this controller if "iiif.enabled=true"
 @ConditionalOnProperty("iiif.enabled")
 public class IIIFControllerV3 {
 
     @Autowired
-    IIIFServiceFacade iiifFacade;
+    IIIFServiceFacadeV3 iiifFacade;
 
     /**
      * The manifest response contains sufficient information for the client to initialize
@@ -70,7 +70,7 @@ public class IIIFControllerV3 {
      * @param query query terms
      * @return AnnotationList as JSON
      */
-    @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest/search", produces = "application/json")
+    @RequestMapping(method = RequestMethod.GET, value = "/v3/{id}/manifest/search", produces = "application/json")
     public String searchInManifest(@PathVariable UUID id,
                                    @RequestParam(name = "q") String query) {
         Context context = ContextUtil.obtainCurrentRequestContext();
@@ -88,7 +88,7 @@ public class IIIFControllerV3 {
      * @param id DSpace Item uuid
      * @return AnnotationList as JSON
      */
-    @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest/seeAlso", produces = "application/json")
+    @RequestMapping(method = RequestMethod.GET, value = "/v3/{id}/manifest/seeAlso", produces = "application/json")
     public String findSeeAlsoList(@PathVariable UUID id) {
         Context context = ContextUtil.obtainCurrentRequestContext();
         return iiifFacade.getSeeAlsoAnnotations(context, id);
@@ -106,7 +106,7 @@ public class IIIFControllerV3 {
      * @param cid canvas identifier
      * @return canvas as JSON
      */
-    @RequestMapping(method = RequestMethod.GET, value = "/{id}/canvas/{cid}", produces = "application/json")
+    @RequestMapping(method = RequestMethod.GET, value = "/v3/{id}/canvas/{cid}", produces = "application/json")
     public String findCanvas(@PathVariable UUID id, @PathVariable String cid) {
         Context context = ContextUtil.obtainCurrentRequestContext();
         return iiifFacade.getCanvas(context, id, cid);

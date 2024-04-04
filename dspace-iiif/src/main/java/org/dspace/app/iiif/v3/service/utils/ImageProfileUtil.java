@@ -24,7 +24,7 @@ public class ImageProfileUtil {
      */
     public ProfileGenerator getImageProfile() throws
             RuntimeException {
-        profile.setIdentifier("http://iiif.io/api/image/2/level1.json");
+        profile.setIdentifier("http://iiif.io/api/image/3/level1.json");
         return profile;
     }
 }

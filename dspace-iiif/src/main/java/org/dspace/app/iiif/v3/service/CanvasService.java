@@ -17,7 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
 import org.dspace.app.iiif.v3.model.generator.CanvasGenerator;
 import org.dspace.app.iiif.v3.model.generator.ImageContentGenerator;
-import org.dspace.app.iiif.v3.service.utils.BitstreamIIIFV3VirtualMetadata;
+import org.dspace.app.iiif.v3.service.utils.BitstreamIIIFVirtualMetadataV3;
 import org.dspace.app.iiif.v3.service.utils.IIIFUtils;
 import org.dspace.content.Bitstream;
 import org.dspace.content.Bundle;
@@ -222,10 +222,10 @@ public class CanvasService extends AbstractResourceService {
         for (String field : BITSTREAM_METADATA_FIELDS) {
             if (StringUtils.startsWith(field, "@") && StringUtils.endsWith(field, "@")) {
                 String virtualFieldName = field.substring(1, field.length() - 1);
-                String beanName = BitstreamIIIFV3VirtualMetadata.IIIF_BITSTREAM_VIRTUAL_METADATA_BEAN_PREFIX +
+                String beanName = BitstreamIIIFVirtualMetadataV3.IIIF_BITSTREAM_VIRTUAL_METADATA_BEAN_PREFIX +
                         virtualFieldName;
-                BitstreamIIIFV3VirtualMetadata virtual = applicationContext.getBean(beanName,
-                        BitstreamIIIFV3VirtualMetadata.class);
+                BitstreamIIIFVirtualMetadataV3 virtual = applicationContext.getBean(beanName,
+                        BitstreamIIIFVirtualMetadataV3.class);
                 List<String> values = virtual.getValues(context, bitstream);
                 if (values.size() > 0) {
                     if (values.size() > 1) {

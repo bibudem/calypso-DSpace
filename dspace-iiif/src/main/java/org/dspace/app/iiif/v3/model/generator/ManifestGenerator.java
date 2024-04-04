@@ -45,7 +45,7 @@ import org.springframework.web.context.annotation.RequestScope;
  */
 @RequestScope
 @Component("manifestGeneratorV3")
-public class ManifestGenerator implements IIIFV3Resource {
+public class ManifestGenerator implements IIIFResourceV3 {
 
     private String identifier;
     private String label;

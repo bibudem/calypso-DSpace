@@ -20,7 +20,7 @@ import de.digitalcollections.iiif.model.sharedcanvas.Resource;
  * Generator for an {@code annotation} model. Annotations associate content resources and commentary with a canvas.
  * This is used for the {@code seeAlso} annotation and Search response.
  */
-public class AnnotationGenerator implements IIIFV3Resource {
+public class AnnotationGenerator implements IIIFResourceV3 {
 
     public static final String TYPE = "sc:AnnotationList";
     public static final Motivation PAINTING = new Motivation("sc:painting");
