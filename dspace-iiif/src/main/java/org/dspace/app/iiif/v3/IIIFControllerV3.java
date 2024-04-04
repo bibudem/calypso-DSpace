@@ -26,14 +26,14 @@ import org.springframework.web.bind.annotation.RestController;
  * @author Michael Spalti  mspalti@willamette.edu
  * @author Andrea Bollini (andrea.bollini at 4science.it)
  */
-@RestController
+@RestController("IIIFControllerV3")
 @RequestMapping("/iiif/v3")
 // Only enable this controller if "iiif.enabled=true"
 @ConditionalOnProperty("iiif.enabled")
-public class IIIFV3Controller {
+public class IIIFControllerV3 {
 
     @Autowired
-    IIIFV3ServiceFacade iiifFacade;
+    IIIFServiceFacade iiifFacade;
 
     /**
      * The manifest response contains sufficient information for the client to initialize
