@@ -310,7 +310,7 @@ public class IIIFUtils {
      * @param bitstream the bitstream DSO
      * @return image dimensions
      */
-    @Cacheable(key = "#bitstream.getID().toString()", cacheNames = "canvasdimensions")
+    @Cacheable(key = "'v3-' + #bitstream.getID().toString()", cacheNames = "canvasdimensions")
     public int[] getImageDimensions(Bitstream bitstream) {
         return iiifApiQueryService.getImageDimensions(bitstream);
     }

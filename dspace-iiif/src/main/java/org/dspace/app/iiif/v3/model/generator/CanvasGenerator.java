@@ -22,7 +22,7 @@ import de.digitalcollections.iiif.model.sharedcanvas.Resource;
  * @author Michael Spalti  mspalti@willamette.edu
  * @author Andrea Bollini (andrea.bollini at 4science.it)
  */
-public class CanvasGenerator implements IIIFV3Resource {
+public class CanvasGenerator implements IIIFResourceV3 {
 
     private final String identifier;
     private final List<MetadataEntry> metadata = new ArrayList<>();

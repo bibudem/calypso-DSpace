@@ -32,8 +32,8 @@ import org.springframework.stereotype.Service;
  * @author Andrea Bollini (andrea.bollini at 4science.it)
  */
 
-@Service("IIIFServiceFacadeV3")
-public class IIIFServiceFacade {
+@Service
+public class IIIFServiceFacadeV3 {
 
     @Autowired
     ItemService itemService;
@@ -68,7 +68,7 @@ public class IIIFServiceFacade {
      * @param id DSpace Item uuid
      * @return manifest as JSON
      */
-    @Cacheable(key = "#id.toString()", cacheNames = "manifests")
+    @Cacheable(key = "'v3-' + #id.toString()", cacheNames = "manifests")
     @PreAuthorize("hasPermission(#id, 'ITEM', 'READ')")
     public String getManifest(Context context, UUID id)
             throws ResourceNotFoundException {
