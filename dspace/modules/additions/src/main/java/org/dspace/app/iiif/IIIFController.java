@@ -116,7 +116,7 @@ public class IIIFController {
     /**
      * Any bitstream may have transcriptions attached to it. This URL will return an
      * annotationList for the bitstream, built with the files withing a specific bundle.
-     * 
+     *
      * @param iId    The item UUID
      * @param bId    The bitstream UUID
      * @param cId    The canvas ID
@@ -126,5 +126,22 @@ public class IIIFController {
     public String findTranscriptions(@PathVariable UUID iId, @PathVariable UUID bId, @PathVariable String cId) {
         Context context = ContextUtil.obtainCurrentRequestContext();
         return iiifFacade.getTranscriptions(context, iId, bId, cId, iId + "/" + bId + "/" + cId + "/transcriptions");
+    }
+
+  /**
+     * Endpoint pour récupérer le manifest V3
+     *
+     * @param id UUID de l'élément DSpace
+     * @return manifest en JSON
+     */
+    @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest/v3", produces = "application/json")
+    public String findManifestV3(@PathVariable UUID id) {
+        Context context = ContextUtil.obtainCurrentRequestContext();
+        try {
+            return iiifV3Facade.getManifest(context, id);
+        } catch (NotImplementedException e) {
+          // Handle the exception as needed
+          return "Method not implemented for ID: " + id;
+        }
     }
 }
