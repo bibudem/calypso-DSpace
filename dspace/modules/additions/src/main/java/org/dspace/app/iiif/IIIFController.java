@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.dspace.app.iiif.v3.IIIFV3ServiceFacade;
+
 
 /**
  * Controller for IIIF Presentation and Search API.
@@ -35,6 +37,9 @@ public class IIIFController {
 
     @Autowired
     IIIFServiceFacade iiifFacade;
+
+    @Autowired
+    IIIFV3ServiceFacade iiifV3Facade;
 
     /**
      * The manifest response contains sufficient information for the client to initialize
@@ -116,7 +121,7 @@ public class IIIFController {
     /**
      * Any bitstream may have transcriptions attached to it. This URL will return an
      * annotationList for the bitstream, built with the files withing a specific bundle.
-     * 
+     *
      * @param iId    The item UUID
      * @param bId    The bitstream UUID
      * @param cId    The canvas ID
@@ -127,4 +132,16 @@ public class IIIFController {
         Context context = ContextUtil.obtainCurrentRequestContext();
         return iiifFacade.getTranscriptions(context, iId, bId, cId, iId + "/" + bId + "/" + cId + "/transcriptions");
     }
+
+  /**
+   * Endpoint pour récupérer le manifest V3
+   *
+   * @param id UUID de l'élément DSpace
+   * @return manifest en JSON
+   */
+  @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest/v3", produces = "application/json")
+  public String findManifestV3(@PathVariable UUID id) {
+      Context context = ContextUtil.obtainCurrentRequestContext();
+      return iiifV3Facade.getManifest(context, id);
+  }
 }

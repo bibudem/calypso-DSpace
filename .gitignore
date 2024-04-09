@@ -46,3 +46,13 @@ rebel.xml
 
 ## Ignore jenv configuration
 .java-version
+
+# Directories generated as a result of compilation
+/assetstore
+/lib
+/log
+/sitemaps
+/solr
+/webapps
+/config
+/sources
