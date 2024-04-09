@@ -10,7 +10,6 @@ package org.dspace.app.iiif.model.generator;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import javax.validation.constraints.NotNull;
 
 import de.digitalcollections.iiif.model.ImageContent;
 import de.digitalcollections.iiif.model.MetadataEntry;
@@ -24,6 +23,7 @@ import de.digitalcollections.iiif.model.sharedcanvas.Resource;
 import de.digitalcollections.iiif.model.sharedcanvas.Sequence;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * This generator wraps a domain model for the {@code Manifest}.
