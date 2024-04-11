@@ -13,7 +13,7 @@ import java.util.UUID;
 import org.dspace.content.Item;
 import org.dspace.content.service.BitstreamService;
 import org.dspace.content.service.ItemService;
-import org.dspace.app.iiif.service.ManifestService;
+import org.dspace.app.iiif.v3.service.ManifestV3Service;
 import org.dspace.core.Context;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -41,7 +41,7 @@ public class IIIFV3ServiceFacade {
     BitstreamService bitstreamService;
 
     @Autowired
-    ManifestService manifestService;
+    ManifestV3Service manifestService;
 
     @Autowired
     IIIFUtils utils;
@@ -60,7 +60,8 @@ public class IIIFV3ServiceFacade {
      */
     @Cacheable(key = "'V3'+ #id.toString()", cacheNames = "manifests")
     @PreAuthorize("hasPermission(#id, 'ITEM', 'READ')")
-    public String getManifest(Context context, UUID id) throws ResourceNotFoundException {
+    public String getManifest(Context context, UUID id)
+        throws ResourceNotFoundException {
         Item item;
         try {
             item = itemService.find(context, id);
@@ -71,14 +72,7 @@ public class IIIFV3ServiceFacade {
             throw new ResourceNotFoundException("IIIF manifest for id " + id + " not found");
         }
 
-        // Creating JSON response using StringBuilder
-        StringBuilder jsonResponse = new StringBuilder();
-        jsonResponse.append("{")
-                    .append("\"id\": \"").append(id.toString()).append("\",")
-                    .append("\"message\": \"Hello World\"")
-                    .append("}");
-
-        return jsonResponse.toString();
+        return manifestService.getManifest(item, context);
     }
 
 }
