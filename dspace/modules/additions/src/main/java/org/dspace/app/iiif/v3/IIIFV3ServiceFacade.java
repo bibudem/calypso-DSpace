@@ -58,7 +58,7 @@ public class IIIFV3ServiceFacade {
      * @param id DSpace Item uuid
      * @return manifest as JSON
      */
-    @Cacheable(key = "'V3'+ #id.toString()", cacheNames = "manifests")
+    @Cacheable(key = "'V33'+ #id.toString()", cacheNames = "manifests")
     @PreAuthorize("hasPermission(#id, 'ITEM', 'READ')")
     public String getManifest(Context context, UUID id)
         throws ResourceNotFoundException {

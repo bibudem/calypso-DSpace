@@ -44,7 +44,7 @@ import org.springframework.web.context.annotation.RequestScope;
  */
 @RequestScope
 @Component
-public class ManifestV3Service extends AbstractResourceService {
+public class ManifestV3Service  extends AbstractResourceService{
 
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(ManifestV3Service.class);
 
@@ -176,5 +176,6 @@ public class ManifestV3Service extends AbstractResourceService {
     private void addViewingHint(Item item) {
         manifestGenerator.addViewingHint(utils.getIIIFViewingHint(item, DOCUMENT_VIEWING_HINT));
     }
+
 
 }

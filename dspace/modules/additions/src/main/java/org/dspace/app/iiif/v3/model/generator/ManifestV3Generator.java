@@ -10,18 +10,17 @@ package org.dspace.app.iiif.v3.model.generator;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import org.dspace.app.iiif.model.generator.IIIFResource;
 
-import de.digitalcollections.iiif.model.ImageContent;
-import de.digitalcollections.iiif.model.MetadataEntry;
-import de.digitalcollections.iiif.model.OtherContent;
-import de.digitalcollections.iiif.model.PropertyValue;
-import de.digitalcollections.iiif.model.enums.ViewingHint;
-import de.digitalcollections.iiif.model.search.ContentSearchService;
-import de.digitalcollections.iiif.model.sharedcanvas.Manifest;
-import de.digitalcollections.iiif.model.sharedcanvas.Range;
-import de.digitalcollections.iiif.model.sharedcanvas.Resource;
-import de.digitalcollections.iiif.model.sharedcanvas.Sequence;
+import info.freelibrary.iiif.presentation.v3.ImageContent;
+import info.freelibrary.iiif.presentation.v3.OtherContent;
+import info.freelibrary.iiif.presentation.v3.Manifest;
+import info.freelibrary.iiif.presentation.v3.ContentResource;
+import info.freelibrary.iiif.presentation.v3.Resource;
+import info.freelibrary.iiif.presentation.v3.properties.Label;
+import info.freelibrary.iiif.presentation.v3.properties.Metadata;
+import info.freelibrary.iiif.presentation.v3.properties.Provider;
+import info.freelibrary.iiif.presentation.v3.properties.Summary;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import jakarta.validation.constraints.NotNull;
@@ -46,22 +45,16 @@ import jakarta.validation.constraints.NotNull;
  */
 @RequestScope
 @Component
-public class ManifestV3Generator implements IIIFResource {
+public class ManifestV3Generator  {
 
+    private URI id;
+    private Label label;
+    private List<Metadata> metadata;
+    private Summary summary;
+    private List<ContentResource<?>> thumbnails;
+    private Provider provider;
     private String identifier;
-    private String label;
-    private PropertyValue description;
     private ImageContent logo;
-    private ViewingHint viewingHint;
-    private Sequence sequence;
-    private List<OtherContent> seeAlsos = new ArrayList<>();
-    private OtherContent related;
-    private ImageContent thumbnail;
-    private ContentSearchService searchService;
-    private List<OtherContent> renderings = new ArrayList<>();
-    private final List<URI> license = new ArrayList<>();
-    private final List<MetadataEntry> metadata = new ArrayList<>();
-    private final List<Range> ranges = new ArrayList<>();
 
     /**
      * Sets the mandatory manifest identifier.
@@ -75,58 +68,78 @@ public class ManifestV3Generator implements IIIFResource {
         this.identifier = identifier;
     }
 
-    /**
-     * Sets the manifest label.
-     * @param label manifest label
-     */
-    public void setLabel(String label) {
-        this.label = label;
+    public ManifestV3Generator(String id, String labelText) {
+        this.id = validateURI(id);
+        this.label = new Label(labelText);
+        this.metadata = new ArrayList<>();
+        this.summary = null;
+        this.thumbnails = new ArrayList<>();
+        this.provider = null;
     }
 
-    /**
-     * Adds an optional license to manifest.
-     * @param license license terms
-     */
-    public void addLicense(String license) {
-        this.license.add(URI.create(license));
+    // Méthode pour valider une URI
+    private URI validateURI(String uriString) {
+        try {
+            return new URI(uriString);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("L'ID fourni n'est pas une URI valide");
+        }
     }
 
-    @Override
-    public Resource<Manifest> generateResource() {
-
-        if (identifier == null) {
-            throw new RuntimeException("The Manifest resource requires an identifier.");
-        }
-        Manifest manifest;
-        if (label != null) {
-            manifest = new Manifest(identifier, label);
-        } else {
-            manifest = new Manifest(identifier);
-        }
-        if (sequence != null) {
-            manifest.addSequence(sequence);
-        }
-        if (metadata.size() > 0) {
-            for (MetadataEntry meta : metadata) {
-                manifest.addMetadata(meta);
+    // Méthode pour ajouter des métadonnées
+    public void addMetadata(Metadata... metadataArray) {
+        for (Metadata data : metadataArray) {
+            if (data != null) {
+                metadata.add(data);
             }
         }
-        if (related != null) {
-            manifest.addRelated(related);
-        }
-        if (searchService != null) {
-            manifest.addService(searchService);
-        }
-        if (license.size() > 0) {
-            manifest.setLicenses(license);
-        }
-        if (description != null) {
-            manifest.setDescription(description);
-        }
-        if (viewingHint != null) {
-            manifest.addViewingHint(viewingHint);
-        }
-        return manifest;
     }
+
+    // Méthode pour définir le résumé
+    public void setSummary(String summaryText) {
+        this.summary = new Summary(summaryText);
+    }
+
+
+    // Méthode pour obtenir les métadonnées
+    public List<Metadata> getMetadata() {
+        return metadata;
+    }
+
+    // Méthode pour obtenir le résumé
+    public Summary getSummary() {
+        return summary;
+    }
+
+     public Provider getProvider() {
+        return provider;
+     }
+
+    // Méthode pour définir le fournisseur
+    public void setProvider(Provider provider) {
+        this.provider = provider;
+    }
+
+
+
+
+   public Resource<Manifest> generateResource() {
+       if (identifier == null) {
+           throw new RuntimeException("Le manifeste nécessite un identifiant.");
+       }
+       Manifest manifest = new Manifest(id.toString(), label.getString());
+
+       // Créer une liste de métadonnées à partir des valeurs fournies
+       List<Metadata> metadataList = new ArrayList<>();
+       for (Metadata metadataItem : metadata) {
+           // Utiliser les valeurs de la liste metadata pour créer des MetadataEntry
+           metadataList.add(new Metadata(metadataItem.getLabel().getString(), metadataItem.getValue().toString()));
+       }
+       // Définir les métadonnées sur le manifeste
+       manifest.setMetadata(metadataList);
+       // Retourner l'instance de Manifest avec les paramètres spécifiés
+       return manifest;
+   }
+
 
 }
