@@ -9,7 +9,6 @@ package org.dspace.app.iiif.model.generator;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.validation.constraints.NotNull;
 
 import de.digitalcollections.iiif.model.ImageContent;
 import de.digitalcollections.iiif.model.MetadataEntry;
@@ -17,6 +16,7 @@ import de.digitalcollections.iiif.model.OtherContent;
 import de.digitalcollections.iiif.model.sharedcanvas.AnnotationList;
 import de.digitalcollections.iiif.model.sharedcanvas.Canvas;
 import de.digitalcollections.iiif.model.sharedcanvas.Resource;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * This generator wraps the domain model for a single {@code Canvas}.
