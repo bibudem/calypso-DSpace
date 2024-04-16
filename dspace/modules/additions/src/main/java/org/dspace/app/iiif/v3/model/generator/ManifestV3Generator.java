@@ -1,145 +1,76 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.app.iiif.v3.model.generator;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-
-import info.freelibrary.iiif.presentation.v3.ImageContent;
-import info.freelibrary.iiif.presentation.v3.OtherContent;
+// Importations des classes nécessaires
 import info.freelibrary.iiif.presentation.v3.Manifest;
-import info.freelibrary.iiif.presentation.v3.ContentResource;
 import info.freelibrary.iiif.presentation.v3.Resource;
+import info.freelibrary.iiif.presentation.v3.properties.Summary;
 import info.freelibrary.iiif.presentation.v3.properties.Label;
 import info.freelibrary.iiif.presentation.v3.properties.Metadata;
-import info.freelibrary.iiif.presentation.v3.properties.Provider;
-import info.freelibrary.iiif.presentation.v3.properties.Summary;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
-import jakarta.validation.constraints.NotNull;
 
-/**
- * This generator wraps a domain model for the {@code Manifest}.
- * <p>
- * Please note that this is a request scoped bean. This mean that for each http request a
- * different instance will be initialized by Spring and used to serve this specific request.</p>
- * <p>
- *  The Manifest is an overall description of the structure and properties of the digital representation
- *  of an object. It carries information needed for the viewer to present the digitized content to the user,
- *  such as a title and other descriptive information about the object or the intellectual work that
- *  it conveys. Each manifest describes how to present a single object such as a book, a photograph,
- *  or a statue.</p>
- *
- * Please note that this is a request scoped bean. This means that for each http request a
- * different instance will be initialized by Spring and used to serve this specific request.
- *
- * @author Michael Spalti  mspalti@willamette.edu
- * @author Andrea Bollini (andrea.bollini at 4science.it)
- */
+import org.dspace.content.Item;
+import org.dspace.core.Context;
+
+import java.util.List;
+import java.util.ArrayList;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+// Annotation indiquant que cette classe est un composant Spring géré par le conteneur
 @RequestScope
 @Component
-public class ManifestV3Generator  {
+public class ManifestV3Generator implements IIIFV3Resource {
 
-    private URI id;
-    private Label label;
-    private List<Metadata> metadata;
-    private Summary summary;
-    private List<ContentResource<?>> thumbnails;
-    private Provider provider;
+    // Initialisation du logger
+    private static final Log log = LogFactory.getLog(ManifestV3Generator.class);
+
+    // Déclaration des variables membres
     private String identifier;
-    private ImageContent logo;
+    private Label label;
+    private Summary summary;
+    private List<Metadata> metadataList = new ArrayList<>();
 
-    /**
-     * Sets the mandatory manifest identifier.
-     * @param identifier manifest identifier
-     */
-    public void setIdentifier(@NotNull String identifier) {
-
-        if (identifier.isEmpty()) {
-            throw new RuntimeException("Invalid manifest identifier. Cannot be an empty string.");
-        }
+    // Méthode pour définir l'identifiant du manifeste
+    public void setID(String identifier) {
         this.identifier = identifier;
     }
 
-    public ManifestV3Generator(String id, String labelText) {
-        this.id = validateURI(id);
-        this.label = new Label(labelText);
-        this.metadata = new ArrayList<>();
-        this.summary = null;
-        this.thumbnails = new ArrayList<>();
-        this.provider = null;
+    // Méthode pour définir l'étiquette du manifeste
+    public void setLabel(String langTag, String value) {
+        this.label = new Label(langTag, value);
     }
 
-    // Méthode pour valider une URI
-    private URI validateURI(String uriString) {
-        try {
-            return new URI(uriString);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("L'ID fourni n'est pas une URI valide");
+    // Méthode pour définir le résumé du manifeste
+    public void setSummary(String summary) {
+        this.summary = new Summary(summary);
+    }
+
+    // Méthode pour ajouter des métadonnées au manifeste
+    public void addMetadata(String field, String value) {
+        Metadata metadata = new Metadata(field, value);
+        this.metadataList.add(metadata);
+    }
+
+    // Méthode pour générer la ressource manifeste
+    @Override
+    public Resource<Manifest> generateResource() {
+        // Vérification si l'identifiant est défini
+        if (identifier == null) {
+            throw new RuntimeException("The Manifest resource requires an identifier.");
         }
-    }
 
-    // Méthode pour ajouter des métadonnées
-    public void addMetadata(Metadata... metadataArray) {
-        for (Metadata data : metadataArray) {
-            if (data != null) {
-                metadata.add(data);
-            }
+        // Création du manifeste avec l'identifiant et l'étiquette
+        Manifest manifest = new Manifest(identifier, label);
+
+        // Vérification si un résumé est défini et l'ajouter au manifeste
+        if (summary != null) {
+            manifest.setSummary(summary);
         }
+
+        // Retourner le manifeste généré
+        return manifest;
     }
-
-    // Méthode pour définir le résumé
-    public void setSummary(String summaryText) {
-        this.summary = new Summary(summaryText);
-    }
-
-
-    // Méthode pour obtenir les métadonnées
-    public List<Metadata> getMetadata() {
-        return metadata;
-    }
-
-    // Méthode pour obtenir le résumé
-    public Summary getSummary() {
-        return summary;
-    }
-
-     public Provider getProvider() {
-        return provider;
-     }
-
-    // Méthode pour définir le fournisseur
-    public void setProvider(Provider provider) {
-        this.provider = provider;
-    }
-
-
-
-
-   public Resource<Manifest> generateResource() {
-       if (identifier == null) {
-           throw new RuntimeException("Le manifeste nécessite un identifiant.");
-       }
-       Manifest manifest = new Manifest(id.toString(), label.getString());
-
-       // Créer une liste de métadonnées à partir des valeurs fournies
-       List<Metadata> metadataList = new ArrayList<>();
-       for (Metadata metadataItem : metadata) {
-           // Utiliser les valeurs de la liste metadata pour créer des MetadataEntry
-           metadataList.add(new Metadata(metadataItem.getLabel().getString(), metadataItem.getValue().toString()));
-       }
-       // Définir les métadonnées sur le manifeste
-       manifest.setMetadata(metadataList);
-       // Retourner l'instance de Manifest avec les paramètres spécifiés
-       return manifest;
-   }
-
-
 }

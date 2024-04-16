@@ -23,6 +23,9 @@ import org.springframework.stereotype.Service;
 
 import org.dspace.app.iiif.service.utils.IIIFUtils;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 
 
 /**
@@ -46,6 +49,8 @@ public class IIIFV3ServiceFacade {
     @Autowired
     IIIFUtils utils;
 
+    private static final Log log = LogFactory.getLog(IIIFV3ServiceFacade.class);
+
     /**
      * The manifest response contains sufficient information for the client to initialize itself
      * and begin to display something quickly to the user. The manifest resource represents a single
@@ -58,7 +63,7 @@ public class IIIFV3ServiceFacade {
      * @param id DSpace Item uuid
      * @return manifest as JSON
      */
-    @Cacheable(key = "'V33'+ #id.toString()", cacheNames = "manifests")
+    @Cacheable(key = "'v3'+ #id.toString()", cacheNames = "manifests")
     @PreAuthorize("hasPermission(#id, 'ITEM', 'READ')")
     public String getManifest(Context context, UUID id)
         throws ResourceNotFoundException {
@@ -71,6 +76,8 @@ public class IIIFV3ServiceFacade {
         if (item == null || !utils.isIIIFEnabled(item)) {
             throw new ResourceNotFoundException("IIIF manifest for id " + id + " not found");
         }
+        // Ajout d'une console pour vérifier si l'élément est correctement récupéré
+        log.info("Item récupéré: " + item.getName());
 
         return manifestService.getManifest(item, context);
     }
