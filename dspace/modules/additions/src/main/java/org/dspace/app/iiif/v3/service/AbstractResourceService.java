@@ -9,7 +9,7 @@ package org.dspace.app.iiif.v3.service;
 
 import java.util.UUID;
 
-import org.dspace.app.iiif.service.utils.IIIFUtils;
+import org.dspace.app.iiif.v3.service.utils.IIIFUtils;
 import org.dspace.app.iiif.service.utils.ImageProfileUtil;
 import org.dspace.app.iiif.service.utils.ThumbProfileUtil;
 import org.dspace.services.ConfigurationService;
@@ -65,7 +65,7 @@ public abstract class AbstractResourceService {
     protected void setConfiguration(ConfigurationService configurationService) {
         this.configurationService = configurationService;
         IIIF_ENDPOINT = configurationService.getProperty("dspace.server.url") + "/iiif/";
-        IMAGE_SERVICE = configurationService.getProperty("iiif.image.server");
+        IMAGE_SERVICE = configurationService.getProperty("iiif.image.server.v3");
         SEARCH_URL = configurationService.getProperty("iiif.search.url");
         BITSTREAM_PATH_PREFIX = configurationService.getProperty("dspace.server.url") + "/api/core/bitstreams";
         DOCUMENT_VIEWING_HINT = configurationService.getProperty("iiif.document.viewing.hint");
