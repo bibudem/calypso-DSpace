@@ -10,8 +10,8 @@ package org.dspace.app.iiif.v3.service;
 import java.util.UUID;
 
 import org.dspace.app.iiif.v3.service.utils.IIIFUtils;
-import org.dspace.app.iiif.service.utils.ImageProfileUtil;
-import org.dspace.app.iiif.service.utils.ThumbProfileUtil;
+import org.dspace.app.iiif.v3.service.utils.ImageProfileUtil;
+import org.dspace.app.iiif.v3.service.utils.ThumbProfileUtil;
 import org.dspace.services.ConfigurationService;
 import org.springframework.beans.factory.annotation.Autowired;
 

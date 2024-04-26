@@ -1,32 +1,26 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.app.iiif.v3.model.generator;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
-
-import info.freelibrary.iiif.presentation.v3.services.ImageService3;
-import info.freelibrary.iiif.presentation.v3.services.ImageService3.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import info.freelibrary.iiif.presentation.v3.Service;
+import info.freelibrary.iiif.presentation.v3.services.ImageService3;
 
 /**
  * This class wraps the domain model service profile.
  */
 @Scope("prototype")
-@Component("Profile pour iiifv3")
-public class ProfileGenerator implements IIIFValue {
+@Component("ProfileGeneratorV3")
+public class ProfileGenerator implements IIIFValue<ImageService3.Profile> {
 
     private String identifier;
+
     /**
-     * Input String will be converted to URI for use in the Profile.
-     * @param identifier  URI as string
+     * Set the identifier for the profile.
+     *
+     * @param identifier The identifier for the profile
      */
     public void setIdentifier(String identifier) {
         this.identifier = identifier;
@@ -35,11 +29,9 @@ public class ProfileGenerator implements IIIFValue {
     @Override
     public ImageService3.Profile generateValue() {
         try {
-            // Convertir URI en String
-            String uriAsString = new URI(identifier).toString();
-            return Profile.valueOf(uriAsString);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            return ImageService3.Profile.fromString(identifier);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid identifier provided", e);
         }
     }
 }

@@ -1,11 +1,11 @@
 package org.dspace.app.iiif.v3.model.generator;
 
-// Importations des classes nécessaires
 import info.freelibrary.iiif.presentation.v3.Manifest;
 import info.freelibrary.iiif.presentation.v3.Resource;
 import info.freelibrary.iiif.presentation.v3.properties.Summary;
 import info.freelibrary.iiif.presentation.v3.properties.Label;
 import info.freelibrary.iiif.presentation.v3.properties.Metadata;
+import info.freelibrary.iiif.presentation.v3.ImageContent;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
@@ -17,12 +17,10 @@ import java.net.URI;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-// Annotation indiquant que cette classe est un composant Spring géré par le conteneur
 @RequestScope
 @Component
 public class ManifestV3Generator implements IIIFV3Resource {
 
-    // Initialisation du logger
     private static final Log log = LogFactory.getLog(ManifestV3Generator.class);
 
     private String identifier;
@@ -30,6 +28,7 @@ public class ManifestV3Generator implements IIIFV3Resource {
         private Summary summary;
         private URI rightsURI;
         private List<Metadata> metadataList;
+        private ImageContent thumbnail;
 
         public ManifestV3Generator() {
             metadataList = new ArrayList<>();
@@ -55,6 +54,14 @@ public class ManifestV3Generator implements IIIFV3Resource {
             this.rightsURI = URI.create(rights);
         }
 
+        /**
+        * Adds optional thumbnail image resource to manifest.
+        * @param thumbnail an image content generator
+        */
+        public void addThumbnail(ImageContentGenerator thumbnail) {
+             this.thumbnail = (ImageContent) thumbnail.generateResource();
+         }
+
         @Override
         public Resource<Manifest> generateResource() {
             if (identifier == null) {
@@ -62,6 +69,10 @@ public class ManifestV3Generator implements IIIFV3Resource {
             }
 
             Manifest manifest = new Manifest(identifier, label);
+
+            if (thumbnail != null) {
+                manifest.setThumbnails(thumbnail);
+            }
 
             if (!metadataList.isEmpty()) {
                 Metadata[] metadataArray = metadataList.toArray(new Metadata[metadataList.size()]);

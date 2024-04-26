@@ -7,7 +7,10 @@ import java.util.Map;
 import org.dspace.services.ConfigurationService;
 
 import org.dspace.app.iiif.v3.model.generator.ManifestV3Generator;
+import org.dspace.app.iiif.v3.model.generator.ImageContentGenerator;
+import org.dspace.app.iiif.v3.model.generator.ProfileGenerator;
 import org.dspace.content.Item;
+import org.dspace.content.Bitstream;
 import org.dspace.core.Context;
 import org.dspace.content.MetadataValue;
 import org.dspace.content.service.ItemService;
@@ -17,6 +20,7 @@ import org.dspace.app.util.service.MetadataExposureService;
 
 import info.freelibrary.iiif.presentation.v3.Manifest;
 import info.freelibrary.iiif.presentation.v3.Resource;
+import info.freelibrary.iiif.presentation.v3.services.ImageService3;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -46,10 +50,19 @@ public class ManifestV3Service extends AbstractResourceService {
     @Autowired
     IIIFUtils utils;
 
+    @Autowired
+    private ManifestV3Generator manifestGenerator;
+
+    @Autowired
+    ImageContentService imageContentService;
+
+    @Autowired
+    private ProfileGenerator profileGenerator;
+
     protected String[] METADATA_FIELDS;
     protected String RENDERING_BUNDLE_NAME;
     protected String RENDERING_ITEM_LABEL;
-    protected String METADATA_LANGUAGE;
+    protected String DEFAULT_LANGUAGE;
 
 
     /**
@@ -61,7 +74,7 @@ public class ManifestV3Service extends AbstractResourceService {
         METADATA_FIELDS = configurationService.getArrayProperty("iiif.metadata.item");
         RENDERING_BUNDLE_NAME = configurationService.getProperty("iiif.rendering.bundle");
         RENDERING_ITEM_LABEL = configurationService.getProperty("iiif.rendering.item");
-        METADATA_LANGUAGE = configurationService.getProperty("default.language");
+        DEFAULT_LANGUAGE = configurationService.getProperty("default.language");
     }
 
      /**
@@ -73,21 +86,20 @@ public class ManifestV3Service extends AbstractResourceService {
      */
     public String getManifest(Item item, Context context) {
         try {
-            // Créer une instance du générateur de manifeste
-            ManifestV3Generator manifestGenerator = new ManifestV3Generator();
 
             String manifestId = getManifestId(item.getID());
             manifestGenerator.setID(manifestId);
-            manifestGenerator.setLabel(METADATA_LANGUAGE,item.getName());
+            manifestGenerator.setLabel(DEFAULT_LANGUAGE,item.getName());
 
-            populateManifest(item, context, manifestGenerator);
+            populateManifest(item, context);
 
-            // Générer la ressource manifeste
+            // Generate the manifest resource
             Resource<Manifest> manifestResource = manifestGenerator.generateResource();
 
-            return utils.asJson(manifestResource);
+            //return utils.asJson(manifestResource);
+            return manifestResource.toString();
         } catch (Exception e) {
-            // Gérer l'exception en fonction de vos besoins
+            // Handle the exception as needed
             log.error("Error generating JSON for manifest", e);
             return null;
         }
@@ -100,10 +112,10 @@ public class ManifestV3Service extends AbstractResourceService {
      * @param context the DSpace context
      * @return manifest domain object
      */
-    private void populateManifest(Item item, Context context, ManifestV3Generator manifestGenerator ) {
+    private void populateManifest(Item item, Context context ) {
 
-        addMetadata(context, item, manifestGenerator);
-
+        addMetadata(context, item);
+        addThumbnail(item, context);
     }
 
     /**
@@ -112,7 +124,7 @@ public class ManifestV3Service extends AbstractResourceService {
      * @param context the DSpace Context
      * @param item the DSpace item
      */
-    private void addMetadata(Context context, Item item , ManifestV3Generator manifestGenerator) {
+    private void addMetadata(Context context, Item item) {
 
         for (String field : METADATA_FIELDS) {
             String[] eq = field.split("\\.");
@@ -159,6 +171,22 @@ public class ManifestV3Service extends AbstractResourceService {
         String licenseUriValue = item.getItemService().getMetadataFirstValue(item, "dc", "rights", "uri", Item.ANY);
         if (StringUtils.isNotBlank(licenseUriValue)) {
             manifestGenerator.setRights(licenseUriValue);
+        }
+    }
+
+    /**
+    * Adds a thumbnail to the manifest. Uses the first image in the manifest.
+    * @param item the DSpace Item
+    * @param context DSpace context
+    */
+    private void addThumbnail(Item item, Context context) {
+        List<Bitstream> bitstreams = utils.getIIIFBitstreams(context, item);
+        if (bitstreams != null && bitstreams.size() > 0) {
+            String mimeType = utils.getBitstreamMimeType(bitstreams.get(0), context);
+            ImageContentGenerator image = imageContentService
+                    .getImageContent(bitstreams.get(0).getID(), mimeType,
+                            thumbUtil.getThumbnailProfile(), THUMBNAIL_PATH);
+            manifestGenerator.addThumbnail(image);
         }
     }
 

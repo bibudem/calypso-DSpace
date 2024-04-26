@@ -7,15 +7,16 @@
  */
 package org.dspace.app.iiif.v3.model.generator;
 
+import info.freelibrary.iiif.presentation.v3.Service;
+
 /**
- * Interface générique pour les générateurs de valeurs IIIF.
- * @param <T> Le type de valeur généré
+ * Interface for iiif service generators.
  */
-public interface IIIFValue<T> {
+public interface IIIFService {
 
     /**
-     * creates and returns a value model.
-     * @return a value model.
+     * Creates and returns a service model
+     * @return a service model
      */
-    T generateValue();
+    Service generateService();
 }

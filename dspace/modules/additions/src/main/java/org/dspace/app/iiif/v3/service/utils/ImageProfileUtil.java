@@ -7,9 +7,11 @@
  */
 package org.dspace.app.iiif.v3.service.utils;
 
-import org.dspace.app.iiif.model.generator.ProfileGenerator;
+import org.dspace.app.iiif.v3.model.generator.ProfileGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import info.freelibrary.iiif.presentation.v3.services.ImageService3;
 
 @Component("ImageProfileUtil iiifv3")
 public class ImageProfileUtil {
@@ -24,7 +26,7 @@ public class ImageProfileUtil {
      */
     public ProfileGenerator getImageProfile() throws
             RuntimeException {
-        profile.setIdentifier("http://iiif.io/api/image/3/level1.json");
+        profile.setIdentifier(ImageService3.Profile.LEVEL_ONE.uri().toString());
         return profile;
     }
 }

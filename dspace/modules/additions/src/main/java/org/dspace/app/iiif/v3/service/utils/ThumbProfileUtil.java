@@ -7,9 +7,12 @@
  */
 package org.dspace.app.iiif.v3.service.utils;
 
-import org.dspace.app.iiif.model.generator.ProfileGenerator;
+import org.dspace.app.iiif.v3.model.generator.ProfileGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import info.freelibrary.iiif.presentation.v3.services.ImageService3;
+
 
 @Component("ThumbProfileUtil iiifv3")
 public class ThumbProfileUtil {
@@ -25,9 +28,9 @@ public class ThumbProfileUtil {
      *
      * @return the thumbnail service profile
      */
-    public ProfileGenerator getThumbnailProfile() throws
-            RuntimeException {
-        profile.setIdentifier("http://iiif.io/api/image/3/level0.json");
+     public ProfileGenerator getThumbnailProfile() throws RuntimeException {
+        // Using constants from ImageService3.Profile to set the profile
+        profile.setIdentifier(ImageService3.Profile.LEVEL_ZERO.uri().toString());
         return profile;
     }
 
