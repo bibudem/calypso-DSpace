@@ -142,8 +142,7 @@ public class ManifestService extends AbstractResourceService {
         addViewingHint(item);
         addThumbnail(item, context);
         addCanvasAndRange(context, item, manifestId);
-        manifestGenerator.addSequence(
-                sequenceService.getSequence(item));
+        manifestGenerator.addSequence(sequenceService.getSequence(item));
         addRendering(item, context);
         addSeeAlso(item, context);
     }

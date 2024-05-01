@@ -18,7 +18,6 @@ public class ImageServiceGenerator implements IIIFService {
      */
     public ImageServiceGenerator setProfile(ProfileGenerator profile) {
         ImageService.Profile serviceProfile = profile.generateValue();
-        // Using a concrete class that implements ImageService.Profile
         imageService.setProfile(serviceProfile);
         return this;
     }

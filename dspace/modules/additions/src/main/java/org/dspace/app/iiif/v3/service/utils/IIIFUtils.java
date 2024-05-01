@@ -174,5 +174,19 @@ public class IIIFUtils {
         return false;
     }
 
+     /**
+     * Return the custom iiif label for the resource or the provided default if none
+     *
+     * @param dso          the dspace object to use as iiif resource
+     * @param defaultLabel the default label to return if none is specified in the
+     *                     metadata
+     * @return the iiif label for the dspace object
+     */
+     public String getIIIFLabel(DSpaceObject dso, String defaultLabel) {
+        return dso.getMetadata().stream()
+                .filter(m -> m.getMetadataField().toString('.').contentEquals(METADATA_IIIF_LABEL))
+                .findFirst().map(m -> m.getValue()).orElse(defaultLabel);
+     }
+
 
 }
