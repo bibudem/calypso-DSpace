@@ -5,6 +5,7 @@ import info.freelibrary.iiif.presentation.v3.Resource;
 import info.freelibrary.iiif.presentation.v3.properties.Summary;
 import info.freelibrary.iiif.presentation.v3.properties.Label;
 import info.freelibrary.iiif.presentation.v3.properties.Metadata;
+import info.freelibrary.iiif.presentation.v3.properties.Rendering;
 import info.freelibrary.iiif.presentation.v3.ImageContent;
 import info.freelibrary.iiif.presentation.v3.properties.SeeAlso;
 
@@ -36,6 +37,7 @@ public class ManifestV3Generator implements IIIFV3Resource {
     private List<Metadata> metadataList;
     private ImageContent thumbnail;
     private List<ExternalLinksGenerator> seeAlsos = new ArrayList<>();
+    private List<Rendering> renderings = new ArrayList<>();
 
     /**
      * Creates a new instance of ManifestV3Generator.
@@ -108,6 +110,15 @@ public class ManifestV3Generator implements IIIFV3Resource {
     public void addSeeAlso(ExternalLinksGenerator seeAlso) {
         this.seeAlsos.add(seeAlso);
     }
+    /**
+     * Adds a rendering annotation to the Sequence. The rendering is a link to an external resource intended
+     * for display or download by a human user. This is typically going to be a PDF file.
+     *
+     * @param rendering The rendering to add
+     */
+    public void addRendering(Rendering rendering) {
+        this.renderings.add(rendering);
+    }
 
     @Override
     public Resource<Manifest> generateResource() {
@@ -133,6 +144,12 @@ public class ManifestV3Generator implements IIIFV3Resource {
         if (!seeAlsos.isEmpty()) {
             for (ExternalLinksGenerator sa : seeAlsos) {
                 manifest.setSeeAlsoRefs(sa.generateSeeAlsoList());
+            }
+        }
+
+        if (!renderings.isEmpty()) {
+            for (Rendering rendering : renderings) {
+                manifest.setRenderings(rendering);
             }
         }
 

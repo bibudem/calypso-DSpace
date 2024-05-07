@@ -84,6 +84,10 @@ public class IIIFUtils {
     @Autowired
     private ObjectMapper mapper;
 
+    public List<Bundle> getIIIFBundles(Item item) {
+        return IIIFSharedUtils.getIIIFBundles(item);
+    }
+
     // get module subclass.
     protected SimpleModule iiifModule = ObjectMapperFactory.getIiifModule();
 

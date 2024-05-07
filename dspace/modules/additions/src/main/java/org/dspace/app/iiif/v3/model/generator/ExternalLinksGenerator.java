@@ -2,6 +2,7 @@ package org.dspace.app.iiif.v3.model.generator;
 
 import info.freelibrary.iiif.presentation.v3.properties.SeeAlso;
 import info.freelibrary.iiif.presentation.v3.properties.Label;
+import info.freelibrary.iiif.presentation.v3.properties.Rendering;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
@@ -121,4 +122,5 @@ public class ExternalLinksGenerator {
         seeAlsoList.add(seeAlso);
         return seeAlsoList;
     }
+
 }
