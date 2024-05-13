@@ -30,7 +30,7 @@ public class ImageContentGenerator implements IIIFV3Resource {
     }
 
     @Override
-    public Resource<ImageContent> generateResource() {
+   public ImageContent generateResource() {
         return imageContent;
     }
 }

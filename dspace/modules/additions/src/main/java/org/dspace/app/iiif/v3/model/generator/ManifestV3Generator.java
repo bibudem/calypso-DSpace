@@ -8,6 +8,7 @@ import info.freelibrary.iiif.presentation.v3.properties.Metadata;
 import info.freelibrary.iiif.presentation.v3.properties.Rendering;
 import info.freelibrary.iiif.presentation.v3.ImageContent;
 import info.freelibrary.iiif.presentation.v3.properties.SeeAlso;
+import info.freelibrary.iiif.presentation.v3.Range;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
@@ -30,6 +31,8 @@ public class ManifestV3Generator implements IIIFV3Resource {
 
     private static final Log log = LogFactory.getLog(ManifestV3Generator.class);
 
+    private Manifest manifest;
+
     private String identifier;
     private Label label;
     private Summary summary;
@@ -38,6 +41,7 @@ public class ManifestV3Generator implements IIIFV3Resource {
     private ImageContent thumbnail;
     private List<ExternalLinksGenerator> seeAlsos = new ArrayList<>();
     private List<Rendering> renderings = new ArrayList<>();
+    private final List<Range> ranges = new ArrayList<>();
 
     /**
      * Creates a new instance of ManifestV3Generator.
@@ -120,6 +124,15 @@ public class ManifestV3Generator implements IIIFV3Resource {
         this.renderings.add(rendering);
     }
 
+    /**
+     * Adds optional Range to the manifest's structures element.
+     * @param rangeGenerator to add
+     */
+    public void addRange(RangeGenerator rangeGenerator) {
+        ranges.add((Range) rangeGenerator.generateResource());
+    }
+
+
     @Override
     public Resource<Manifest> generateResource() {
         if (identifier == null) {
@@ -150,6 +163,12 @@ public class ManifestV3Generator implements IIIFV3Resource {
         if (!renderings.isEmpty()) {
             for (Rendering rendering : renderings) {
                 manifest.setRenderings(rendering);
+            }
+        }
+
+        if (ranges.size() > 0) {
+            for (Range range : ranges) {
+                manifest.addRanges(range);
             }
         }
 

@@ -37,6 +37,7 @@ import org.dspace.content.service.BitstreamService;
 import org.dspace.core.Context;
 import org.dspace.iiif.IIIFApiQueryService;
 import org.dspace.iiif.util.IIIFSharedUtils;
+import org.dspace.iiif.IIIFApiQueryService;
 import org.dspace.services.ConfigurationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -83,6 +84,9 @@ public class IIIFUtils {
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Autowired
+    IIIFApiQueryService iiifApiQueryService;
 
     public List<Bundle> getIIIFBundles(Item item) {
         return IIIFSharedUtils.getIIIFBundles(item);
@@ -192,5 +196,203 @@ public class IIIFUtils {
                 .findFirst().map(m -> m.getValue()).orElse(defaultLabel);
      }
 
+     /**
+     * Checks to see if the item is searchable. Based on the
+     * {@link #METADATA_IIIF_SEARCH_ENABLED} metadata.
+     *
+     * @param item DSpace item
+     * @return true if the iiif search is enabled
+     */
+     public boolean isSearchable(Item item) {
+         return item.getMetadata().stream()
+                 .filter(m -> m.getMetadataField().toString('.').contentEquals("iiif.search.enabled"))
+                 .anyMatch(m -> m.getValue().equalsIgnoreCase("true")  ||
+                         m.getValue().equalsIgnoreCase("yes"));
+     }
+
+      /**
+      * Test to see if the bitstream contains iiif image width metadata.
+      * @param bitstream the bitstream DSo
+      * @return true if width metadata was found
+      */
+     public boolean hasWidthMetadata(Bitstream bitstream) {
+         return bitstream.getMetadata().stream()
+                   .filter(m -> m.getMetadataField().toString('.').contentEquals("iiif.image.width"))
+                   .findFirst().map(m -> m != null).orElse(false);
+
+     }
+
+      /**
+      * Return the iiif toc for the specified bundle
+      *
+      * @param bundle the dspace bundle
+      * @return the iiif toc for the specified bundle
+      */
+     public String getBundleIIIFToC(Bundle bundle) {
+         String label = bundle.getMetadata().stream()
+                 .filter(m -> m.getMetadataField().toString('.').contentEquals(METADATA_IIIF_LABEL))
+                 .findFirst().map(m -> m.getValue()).orElse(getToCBundleLabel(bundle));
+         return bundle.getMetadata().stream()
+                 .filter(m -> m.getMetadataField().toString('.').contentEquals(METADATA_IIIF_TOC))
+                 .findFirst().map(m -> m.getValue() + TOC_SEPARATOR + label).orElse(label);
+     }
+
+     /**
+      * Excludes bundles found in the iiif.exclude.toc.bundle list
+      *
+      * @param bundle    the dspace bundle
+      * @return  bundle name or null if bundle is excluded
+      */
+     private String getToCBundleLabel(Bundle bundle) {
+         String[] iiifAlternate = configurationService.getArrayProperty("iiif.exclude.toc.bundle");
+         if (Arrays.stream(iiifAlternate).anyMatch(x -> x.contentEquals(bundle.getName()))) {
+             return null;
+         }
+         return bundle.getName();
+     }
+
+     /**
+      * Return the table of contents (toc) positions in the iiif structure where the
+      * resource appears. Please note that the same resource can belong to multiple
+      * ranges (i.e. a page that contains the last paragraph of a section and start
+      * the new section)
+      *
+      * @param bitstream    the dspace bitstream
+      * @param prefix a string to add to all the returned toc inherited from the
+      *               parent dspace object
+      * @return the iiif tocs for the dspace object
+      */
+     public List<String> getIIIFToCs(Bitstream bitstream, String prefix) {
+         List<String> tocs = bitstream.getMetadata().stream()
+                 .filter(m -> m.getMetadataField().toString('.').contentEquals(METADATA_IIIF_TOC))
+                 .map(m -> StringUtils.isNotBlank(prefix) ? prefix + TOC_SEPARATOR + m.getValue() : m.getValue())
+                 .collect(Collectors.toList());
+         if (tocs.size() == 0 && StringUtils.isNotBlank(prefix)) {
+             return List.of(prefix);
+         } else {
+             return tocs;
+         }
+     }
+
+     /**
+      * Retrieves image dimensions from the image server (IIIF Image API v.2.1.1).
+      * @param bitstream the bitstream DSO
+      * @return image dimensions
+      */
+     @Cacheable(key = "#bitstream.getID().toString()", cacheNames = "canvasdimensions")
+     public int[] getImageDimensions(Bitstream bitstream) {
+         return iiifApiQueryService.getImageDimensions(bitstream);
+     }
+
+      /**
+      * Return the prefix to use to generate canvas name for canvas that has no an
+      * explicit IIIF label
+      *
+      * @param item          the DSpace Item
+      * @param defaultNaming a default to return if the item has not a custom value
+      * @return the prefix to use to generate canvas name for canvas that has no an
+      *         explicit IIIF label
+      */
+     public String getCanvasNaming(Item item, String defaultNaming) {
+         return item.getMetadata().stream()
+                 .filter(m -> m.getMetadataField().toString('.').contentEquals(METADATA_IIIF_CANVAS_NAMING))
+                 .findFirst().map(m -> m.getValue()).orElse(defaultNaming);
+     }
+
+     /**
+      * Retrives a bitstream based on its position in the IIIF bundle.
+      *
+      * @param context        DSpace Context
+      * @param item           DSpace Item
+      * @param canvasPosition bitstream position
+      * @return bitstream or null if the specified canvasPosition doesn't exist in
+      *         the manifest
+      */
+     public Bitstream getBitstreamForCanvas(Context context, Item item, int canvasPosition) {
+         List<Bitstream> bitstreams = getIIIFBitstreams(context, item);
+         return bitstreams.size() > canvasPosition ? bitstreams.get(canvasPosition) : null;
+     }
+
+     /**
+      * Extracts canvas position from the URL input path.
+      * @param canvasId e.g. "c12"
+      * @return the position, e.g. 12
+      */
+     public int getCanvasId(String canvasId) {
+         return Integer.parseInt(canvasId.substring(1));
+     }
+
+
+     /**
+      * Utility method to extract an integer from metadata value. The defaultValue is
+      * returned if there are not values for the specified metadata or the value is
+      * not a valid integer. Only the first metadata value if any is used
+      *
+      * @param dso          the dspace object
+      * @param metadata     the metadata key (schema.element[.qualifier]
+      * @param defaultValue default to return if the metadata value is not an integer
+      * @return an integer from metadata value
+      */
+     private int getSizeFromMetadata(DSpaceObject dso, String metadata, int defaultValue) {
+         return dso.getMetadata().stream()
+                 .filter(m -> m.getMetadataField().toString('.').contentEquals(metadata))
+                 .findFirst().map(m -> castToInt(m, defaultValue))
+                   .orElse(defaultValue);
+     }
+
+      /**
+      * Return the width for the canvas associated with the bitstream. If the
+      * bitstream doesn't provide directly the information it is retrieved from the
+      * bundle, item or default.
+      *
+      * @param bitstream    the dspace bitstream used in the canvas
+      * @param bundle       the bundle the bitstream belong to
+      * @param item         the item the bitstream belong to
+      * @param defaultWidth the default width to apply if no other preferences are
+      *                     found
+      * @return the width in pixel for the canvas associated with the bitstream
+      */
+     public int getCanvasWidth(Bitstream bitstream, Bundle bundle, Item item, int defaultWidth) {
+         return getSizeFromMetadata(bitstream, METADATA_IMAGE_WIDTH,
+                     getSizeFromMetadata(bundle, METADATA_IMAGE_WIDTH,
+                         getSizeFromMetadata(item, METADATA_IMAGE_WIDTH, defaultWidth)));
+     }
+
+     /**
+       * Return the height for the canvas associated with the bitstream. If the
+       * bitstream doesn't provide directly the information it is retrieved from the
+       * bundle, item or default.
+       *
+       * @param bitstream    the dspace bitstream used in the canvas
+       * @param bundle       the bundle the bitstream belong to
+       * @param item         the item the bitstream belong to
+       * @param defaultHeight the default width to apply if no other preferences are
+       *                     found
+       * @return the height in pixel for the canvas associated with the bitstream
+       */
+     public int getCanvasHeight(Bitstream bitstream, Bundle bundle, Item item, int defaultHeight) {
+          return getSizeFromMetadata(bitstream, METADATA_IMAGE_HEIGHT,
+                  getSizeFromMetadata(bundle, METADATA_IMAGE_HEIGHT,
+                      getSizeFromMetadata(item, METADATA_IMAGE_HEIGHT, defaultHeight)));
+     }
+
+     /**
+      * Utility method to cast a metadata value to int. The defaultInt is returned if
+      * the metadata value is not a valid integer
+      *
+      * @param m             the metadata value
+      * @param defaultInt default to return if the metadata value is not an
+      *                      integer
+      * @return an int corresponding to the metadata value
+      */
+     private int castToInt(MetadataValue m, int defaultInt) {
+         try {
+             return Integer.parseInt(m.getValue());
+         } catch (NumberFormatException e) {
+             log.error("Error parsing " + m.getMetadataField().toString('.') + " of " + m.getDSpaceObject().getID()
+                     + " the value " + m.getValue() + " is not an integer. Returning the default.");
+         }
+         return defaultInt;
+     }
 
 }
