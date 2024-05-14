@@ -24,7 +24,7 @@ public class CanvasGenerator implements IIIFV3Resource {
 
     private final String identifier;
     private final List<Metadata> metadata = new ArrayList<>();
-    //private final List<ImageContent> images = new ArrayList<>();
+    private final List<ImageContent> images = new ArrayList();
     private String label;
     private Integer height;
     private Integer width;
@@ -53,13 +53,13 @@ public class CanvasGenerator implements IIIFV3Resource {
         return this;
     }
 
-    /*public CanvasGenerator addImage(ImageContent image) {
-        this.image = image;
+    public CanvasGenerator addImage(ImageContent image) {
+        images.add((ImageContent) image);
         return this;
-    }*/
+    }
 
     public CanvasGenerator addThumbnail(ImageContent thumbnail) {
-        this.thumbnail = thumbnail;
+        this.thumbnail = (ImageContent) thumbnail;
         return this;
     }
 
@@ -71,7 +71,7 @@ public class CanvasGenerator implements IIIFV3Resource {
     }
 
     @Override
-    public Canvas generateResource() {
+    public Resource<Canvas> generateResource() {
         Canvas canvas;
         if (identifier == null) {
             throw new RuntimeException("The Canvas resource requires an identifier.");
@@ -87,9 +87,9 @@ public class CanvasGenerator implements IIIFV3Resource {
             }
             canvas.setWidthHeight(width, height);
 
-            /*for (ImageContent res : images) {
-                canvas.addImage(res);
-            }*/
+            for (ImageContent res : images) {
+                canvas.setThumbnails(res);
+            }
             if (thumbnail != null) {
                 canvas.setThumbnails(thumbnail);
             }
