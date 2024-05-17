@@ -9,6 +9,7 @@ import info.freelibrary.iiif.presentation.v3.properties.Rendering;
 import info.freelibrary.iiif.presentation.v3.ImageContent;
 import info.freelibrary.iiif.presentation.v3.properties.SeeAlso;
 import info.freelibrary.iiif.presentation.v3.Range;
+import info.freelibrary.iiif.presentation.v3.Canvas;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
@@ -42,6 +43,8 @@ public class ManifestV3Generator implements IIIFV3Resource {
     private List<ExternalLinksGenerator> seeAlsos = new ArrayList<>();
     private List<Rendering> renderings = new ArrayList<>();
     private final List<Range> ranges = new ArrayList<>();
+    private final List<Canvas> canvas = new ArrayList<>();
+    //private Canvas canvas;
 
     /**
      * Creates a new instance of ManifestV3Generator.
@@ -132,6 +135,22 @@ public class ManifestV3Generator implements IIIFV3Resource {
         ranges.add((Range) rangeGenerator.generateResource());
     }
 
+   /**
+    * Adds add single (mandatory) {@code sequence} to the manifest. In IIIF Presentation API 3.0 "items"
+    *
+    * @param items Liste des modèles de canevas
+    */
+   // Remplacez la méthode addCanvasItems par la suivante :
+   public void addCanvasItems(List<CanvasGenerator> items) {
+       for (CanvasGenerator canvas : items) {
+           Canvas canvasResource = (Canvas) canvas.generateResource();
+           this.canvas.add(canvasResource);
+       }
+   }
+
+
+
+
 
     @Override
     public Resource<Manifest> generateResource() {
@@ -171,6 +190,11 @@ public class ManifestV3Generator implements IIIFV3Resource {
                 manifest.addRanges(range);
             }
         }
+
+        if (canvas != null) {
+            manifest.setCanvases(canvas);
+        }
+
 
         return manifest;
     }

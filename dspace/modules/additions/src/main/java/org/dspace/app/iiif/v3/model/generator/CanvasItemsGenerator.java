@@ -16,21 +16,22 @@ import info.freelibrary.iiif.presentation.v3.Manifest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 /**
- * This generator wraps the domain model for a Presentation API 2.1.1 {@code Sequence}. The IIIF sequence
- * conveys the ordering of the views of the object.
- *
- * <p>Please note that this is a request scoped bean. This means that for each http request a
- * different instance will be initialized by Spring and used to serve this specific request.</p>
+ * This generator wraps the domain model for a Presentation API 3 {@code Sequence}. The IIIF sequence
  *
  */
 @RequestScope
 @Component("CanvasItemsGeneratorV3")
 public class CanvasItemsGenerator implements IIIFV3Resource {
 
+private static final Log log = LogFactory.getLog(ManifestV3Generator.class);
+
     private String identifier;
     private final List<Canvas> canvas = new ArrayList<>();
     private String language;
+
 
     public void setIdentifier(String identifier) {
         this.identifier = identifier;
@@ -50,10 +51,11 @@ public class CanvasItemsGenerator implements IIIFV3Resource {
         return resource.getID().toString();
     }
 
-    @Override
-    public Resource<Manifest> generateResource() {
-        Manifest items = new Manifest(identifier, this.language);
-        items.setCanvases(canvas);
+
+     @Override
+     public Resource<Canvas> generateResource() {
+        Canvas items = new Canvas(identifier);
         return items;
-    }
+     }
+
 }

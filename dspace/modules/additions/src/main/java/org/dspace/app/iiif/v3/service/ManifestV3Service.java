@@ -12,6 +12,7 @@ import org.dspace.app.iiif.v3.model.generator.ImageContentGenerator;
 import org.dspace.app.iiif.v3.model.generator.ProfileGenerator;
 import org.dspace.app.iiif.v3.model.generator.ExternalLinksGenerator;
 import org.dspace.app.iiif.v3.model.generator.CanvasGenerator;
+import org.dspace.app.iiif.v3.model.generator.CanvasItemsGenerator;
 import org.dspace.app.iiif.v3.model.generator.RangeGenerator;
 
 import org.dspace.content.Item;
@@ -26,6 +27,7 @@ import org.dspace.app.util.service.MetadataExposureService;
 
 import info.freelibrary.iiif.presentation.v3.Manifest;
 import info.freelibrary.iiif.presentation.v3.Resource;
+import info.freelibrary.iiif.presentation.v3.Canvas;
 import info.freelibrary.iiif.presentation.v3.services.ImageService3;
 import info.freelibrary.iiif.presentation.v3.OtherContent;
 import info.freelibrary.iiif.presentation.v3.properties.SeeAlso;
@@ -50,6 +52,7 @@ public class ManifestV3Service extends AbstractResourceService {
     private static final Log log = LogFactory.getLog(ManifestV3Service.class);
 
     private List<OtherContent> otherContents = new ArrayList<>();
+    private List<CanvasItemsGenerator> canvasItems = new ArrayList<>();
 
     @Autowired
     protected ItemService itemService;
@@ -83,6 +86,12 @@ public class ManifestV3Service extends AbstractResourceService {
 
     @Autowired
     CanvasService canvasService;
+
+    @Autowired
+    CanvasGenerator canvasGenerator;
+
+    @Autowired
+    CanvasItemsGenerator itemGenerator;
 
     /**
      * Estimate image dimension metadata.
@@ -162,11 +171,15 @@ public class ManifestV3Service extends AbstractResourceService {
      * @param manifestId the generated manifestId
      */
     private void addCanvasAndRange(Context context, Item item, String manifestId) {
-
         // Set the root Range for this manifest.
         rangeService.setRootRange(manifestId);
         // Get bundles that contain manifest data.
         List<Bundle> bundles = utils.getIIIFBundles(item);
+        List<CanvasGenerator> canvasList = new ArrayList<>();
+
+        int countCanvas = 0;
+        String mimeType;
+
         // Set the default canvas dimensions.
         if (guessCanvasDimension) {
             canvasService.guessCanvasDimensions(context, bundles);
@@ -180,10 +193,24 @@ public class ManifestV3Service extends AbstractResourceService {
             for (Bitstream bitstream : utils.getIIIFBitstreams(context, bnd)) {
                 // Add the Canvas to the CanvasItemsService.
                 CanvasGenerator canvas = canvasItemsService.addCanvas(context, item, bnd, bitstream, DEFAULT_LANGUAGE);
+
                 // Update the Ranges.
                 rangeService.updateRanges(bitstream, bundleToCPrefix, canvas);
+
+                // Update Canvas list.
+                mimeType = utils.getBitstreamMimeType(bitstream, context);
+
+                CanvasGenerator canvasItem = canvasService.getCanvas(context,manifestId,bitstream,bnd,item,countCanvas,mimeType);
+                countCanvas++;
+
+                canvasList.add(canvasItem);
             }
         }
+
+
+        // Add these CanvasItems to manifestGenerator
+        manifestGenerator.addCanvasItems(canvasList);
+
         // If Ranges were created, add them to manifest.
         Map<String, RangeGenerator> tocRanges = rangeService.getTocRanges();
         if (tocRanges != null && tocRanges.size() > 0) {
@@ -194,6 +221,9 @@ public class ManifestV3Service extends AbstractResourceService {
             }
         }
     }
+
+
+
 
     /**
      * Adds DSpace Item metadata to the manifest.

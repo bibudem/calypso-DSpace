@@ -10,26 +10,37 @@ package org.dspace.app.iiif.v3.model.generator;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.dspace.services.ConfigurationService;
+
 import info.freelibrary.iiif.presentation.v3.Canvas;
 import info.freelibrary.iiif.presentation.v3.ImageContent;
 import info.freelibrary.iiif.presentation.v3.properties.Metadata;
 import info.freelibrary.iiif.presentation.v3.Resource;
 import info.freelibrary.iiif.presentation.v3.Manifest;
+import info.freelibrary.iiif.presentation.v3.properties.Label;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.RequestScope;
+
 
 /**
  * This generator wraps the domain model for a single {@code Canvas}.
  */
+
+@RequestScope
+@Component("CanvasGeneratorV3")
 public class CanvasGenerator implements IIIFV3Resource {
 
     private final String identifier;
     private final List<Metadata> metadata = new ArrayList<>();
     private final List<ImageContent> images = new ArrayList();
-    private String label;
+    private Label label;
+    private String language;
     private Integer height;
     private Integer width;
     private ImageContent thumbnail;
     private ImageContent image;
+
 
     public CanvasGenerator(@NotNull String identifier) {
         if (identifier.isEmpty()) {
@@ -42,7 +53,8 @@ public class CanvasGenerator implements IIIFV3Resource {
         return identifier;
     }
 
-    public CanvasGenerator setLabel(String label) {
+
+    public CanvasGenerator setLabel(Label label) {
         this.label = label;
         return this;
     }
@@ -78,9 +90,10 @@ public class CanvasGenerator implements IIIFV3Resource {
         }
         if (label != null) {
             canvas = new Canvas(identifier, label);
-        } else {
+            }
+        else {
             canvas = new Canvas(identifier);
-        }
+            }
         if (thumbnail != null) {
             if (height == null || width == null) {
                 throw new RuntimeException("The Canvas resource requires both height and width dimensions.");

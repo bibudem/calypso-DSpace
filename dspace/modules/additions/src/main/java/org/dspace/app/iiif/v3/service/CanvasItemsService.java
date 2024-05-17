@@ -7,6 +7,7 @@ package org.dspace.app.iiif.v3.service;
 import org.apache.logging.log4j.Logger;
 import org.dspace.app.iiif.v3.model.generator.CanvasGenerator;
 import org.dspace.app.iiif.v3.model.generator.CanvasItemsGenerator;
+import info.freelibrary.iiif.presentation.v3.Canvas;
 import org.dspace.content.Bitstream;
 import org.dspace.content.Bundle;
 import org.dspace.content.Item;
@@ -15,6 +16,12 @@ import org.dspace.services.ConfigurationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
+
+import java.util.List;
+import java.util.ArrayList;
+import org.dspace.content.Bundle;
+
+
 
 
 @RequestScope
@@ -38,7 +45,6 @@ public class CanvasItemsService extends AbstractResourceService {
      * @param configurationService The DSpace configuration service.
      */
     public CanvasItemsService(ConfigurationService configurationService) {
-        DEFAULT_LANGUAGE = configurationService.getProperty("default.language");
         setConfiguration(configurationService);
     }
 
@@ -48,12 +54,13 @@ public class CanvasItemsService extends AbstractResourceService {
      * @param item The DSpace item.
      * @return The canvas items generator.
      */
-    public CanvasItemsGenerator getSequence(Item item) {
+    public CanvasItemsGenerator getCanvasItem(Item item) {
         itemGenerator.setIdentifier(IIIF_ENDPOINT + item.getID() + "/item/i0");
         return itemGenerator;
     }
 
-    /**
+
+      /**
      * Add a canvas to the sequence for the specified item.
      *
      * @param context    The DSpace context.
@@ -71,4 +78,6 @@ public class CanvasItemsService extends AbstractResourceService {
         counter++;
         return canvasGenerator;
     }
+
+
 }
