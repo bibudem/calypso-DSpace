@@ -182,7 +182,7 @@ public class CanvasService extends AbstractResourceService {
          * @param mimeType  bitstream mimetype
          * @return a canvas generator
          */
-        protected CanvasGenerator getCanvas(Context context, String manifestId, Bitstream bitstream, Bundle bundle,
+        protected CanvasGenerator getCanvas(Context context, String itemId, Bitstream bitstream, Bundle bundle,
                 Item item, int count, String mimeType) {
             int pagePosition = count + 1;
 
@@ -203,7 +203,7 @@ public class CanvasService extends AbstractResourceService {
                     thumbUtil.getThumbnailProfile(), THUMBNAIL_PATH);
 
             return addMetadata(context, bitstream,
-                    new CanvasGenerator(IIIF_ENDPOINT + bitstream.getID().toString() + "/canvas/c" + count)
+                    new CanvasGenerator(IIIF_ENDPOINT + itemId + "/canvas/c" + count)
                         .addImage(image.generateResource()).addThumbnail(thumb.generateResource()).setWidthHeight(canvasWidth, canvasHeight)
                         .addThumbnail(thumb.generateResource())
                         .setWidthHeight(canvasWidth, canvasHeight).setLabel(label));

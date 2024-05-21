@@ -10,6 +10,7 @@ import info.freelibrary.iiif.presentation.v3.ImageContent;
 import info.freelibrary.iiif.presentation.v3.properties.SeeAlso;
 import info.freelibrary.iiif.presentation.v3.Range;
 import info.freelibrary.iiif.presentation.v3.Canvas;
+import info.freelibrary.iiif.presentation.v3.properties.ViewingDirection;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
@@ -44,7 +45,7 @@ public class ManifestV3Generator implements IIIFV3Resource {
     private List<Rendering> renderings = new ArrayList<>();
     private final List<Range> ranges = new ArrayList<>();
     private final List<Canvas> canvas = new ArrayList<>();
-    //private Canvas canvas;
+    private ViewingDirection viewingDirection;
 
     /**
      * Creates a new instance of ManifestV3Generator.
@@ -149,8 +150,14 @@ public class ManifestV3Generator implements IIIFV3Resource {
    }
 
 
-
-
+    /**
+     * Sets the viewing direction. In the context of IIIF Presentation API version 3.0, this becomes the "behavior" of the manifest.
+     *
+     * @param viewingDirection The viewing direction to set
+     */
+    public void addViewingDirection(String viewingDirection) {
+        this.viewingDirection = ViewingDirection.fromString(viewingDirection);
+    }
 
     @Override
     public Resource<Manifest> generateResource() {
@@ -193,6 +200,10 @@ public class ManifestV3Generator implements IIIFV3Resource {
 
         if (canvas != null) {
             manifest.setCanvases(canvas);
+        }
+
+        if (viewingDirection != null) {
+            manifest.setViewingDirection(viewingDirection);
         }
 
 

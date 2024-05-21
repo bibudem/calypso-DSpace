@@ -104,6 +104,7 @@ public class ManifestV3Service extends AbstractResourceService {
     protected String RENDERING_BUNDLE_NAME;
     protected String RENDERING_ITEM_LABEL;
     protected String DEFAULT_LANGUAGE;
+    protected String DOCUMENT_VIEWING_DIRECTION;
 
 
     /**
@@ -116,6 +117,7 @@ public class ManifestV3Service extends AbstractResourceService {
         RENDERING_BUNDLE_NAME = configurationService.getProperty("iiif.rendering.bundle");
         RENDERING_ITEM_LABEL = configurationService.getProperty("iiif.rendering.item");
         DEFAULT_LANGUAGE = configurationService.getProperty("default.language");
+        DOCUMENT_VIEWING_DIRECTION = configurationService.getProperty("iiif.v3.document.viewing.direction");
     }
 
      /**
@@ -155,6 +157,9 @@ public class ManifestV3Service extends AbstractResourceService {
      */
     private void populateManifest(Item item, Context context ) {
         String manifestId = getManifestId(item.getID());
+        manifestGenerator.setID(manifestId);
+        manifestGenerator.setLabel(DEFAULT_LANGUAGE, item.getName());
+        manifestGenerator.addViewingDirection(DOCUMENT_VIEWING_DIRECTION);
         addMetadata(context, item);
         addThumbnail(item, context);
         addSeeAlso(item, context);
@@ -179,6 +184,7 @@ public class ManifestV3Service extends AbstractResourceService {
 
         int countCanvas = 0;
         String mimeType;
+        String itemId = item.getID().toString();
 
         // Set the default canvas dimensions.
         if (guessCanvasDimension) {
@@ -200,7 +206,7 @@ public class ManifestV3Service extends AbstractResourceService {
                 // Update Canvas list.
                 mimeType = utils.getBitstreamMimeType(bitstream, context);
 
-                CanvasGenerator canvasItem = canvasService.getCanvas(context,manifestId,bitstream,bnd,item,countCanvas,mimeType);
+                CanvasGenerator canvasItem = canvasService.getCanvas(context,itemId,bitstream,bnd,item,countCanvas,mimeType);
                 countCanvas++;
 
                 canvasList.add(canvasItem);
@@ -221,9 +227,6 @@ public class ManifestV3Service extends AbstractResourceService {
             }
         }
     }
-
-
-
 
     /**
      * Adds DSpace Item metadata to the manifest.
