@@ -35,7 +35,7 @@ public class CanvasGenerator implements IIIFV3Resource {
     private final List<Metadata> metadata = new ArrayList<>();
     private final List<ImageContent> images = new ArrayList();
     private Label label;
-    private String language;
+    private String langTag;
     private Integer height;
     private Integer width;
     private ImageContent thumbnail;
@@ -75,11 +75,11 @@ public class CanvasGenerator implements IIIFV3Resource {
         return this;
     }
 
-    public void addMetadata(String field, String value, String... rest) {
+    public void addMetadata(String langTag,String field, String value, String... rest) {
         MetadataEntryGenerator metadataEntryGenerator = new MetadataEntryGenerator();
         metadataEntryGenerator.setField(field);
         metadataEntryGenerator.setValue(value, rest);
-        metadata.add(metadataEntryGenerator.generateValue());
+        metadata.add(metadataEntryGenerator.generateValue(langTag));
     }
 
     @Override

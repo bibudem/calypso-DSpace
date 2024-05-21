@@ -202,7 +202,7 @@ public class CanvasService extends AbstractResourceService {
             ImageContentGenerator thumb = imageContentService.getImageContent(bitstreamId, mimeType,
                     thumbUtil.getThumbnailProfile(), THUMBNAIL_PATH);
 
-            return addMetadata(context, bitstream,
+            return addMetadata(DEFAULT_LANGUAGE, context, bitstream,
                     new CanvasGenerator(IIIF_ENDPOINT + itemId + "/canvas/c" + count)
                         .addImage(image.generateResource()).addThumbnail(thumb.generateResource()).setWidthHeight(canvasWidth, canvasHeight)
                         .addThumbnail(thumb.generateResource())
@@ -226,7 +226,7 @@ public class CanvasService extends AbstractResourceService {
      * @param canvasGenerator canvas generator
      * @return canvas generator
      */
-    private CanvasGenerator addMetadata(Context context, Bitstream bitstream, CanvasGenerator canvasGenerator) {
+    private CanvasGenerator addMetadata(String langTag, Context context, Bitstream bitstream, CanvasGenerator canvasGenerator) {
             BitstreamService bService = ContentServiceFactory.getInstance().getBitstreamService();
             for (String field : BITSTREAM_METADATA_FIELDS) {
                 if (StringUtils.startsWith(field, "@") && StringUtils.endsWith(field, "@")) {
@@ -238,10 +238,10 @@ public class CanvasService extends AbstractResourceService {
                     List<String> values = virtual.getValues(context, bitstream);
                     if (values.size() > 0) {
                         if (values.size() > 1) {
-                            canvasGenerator.addMetadata("bitstream.iiif-virtual." + virtualFieldName, values.get(0),
+                            canvasGenerator.addMetadata(langTag, "bitstream.iiif-virtual." + virtualFieldName, values.get(0),
                                     values.subList(1, values.size()).toArray(new String[values.size() - 1]));
                         } else {
-                            canvasGenerator.addMetadata("bitstream.iiif-virtual." + virtualFieldName, values.get(0));
+                            canvasGenerator.addMetadata(langTag,"bitstream.iiif-virtual." + virtualFieldName, values.get(0));
                         }
                     }
                 } else {
@@ -262,10 +262,10 @@ public class CanvasService extends AbstractResourceService {
                     }
                     if (values.size() > 0) {
                         if (values.size() > 1) {
-                            canvasGenerator.addMetadata("bitstream." + field, values.get(0),
+                            canvasGenerator.addMetadata(langTag,"bitstream." + field, values.get(0),
                                     values.subList(1, values.size()).toArray(new String[values.size() - 1]));
                         } else {
-                            canvasGenerator.addMetadata("bitstream." + field, values.get(0));
+                            canvasGenerator.addMetadata(langTag,"bitstream." + field, values.get(0));
                         }
                     }
                 }

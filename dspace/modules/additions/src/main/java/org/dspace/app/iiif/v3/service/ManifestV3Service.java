@@ -103,7 +103,7 @@ public class ManifestV3Service extends AbstractResourceService {
     protected String[] METADATA_FIELDS;
     protected String RENDERING_BUNDLE_NAME;
     protected String RENDERING_ITEM_LABEL;
-    protected String DEFAULT_LANGUAGE;
+    protected String LANGUAGE_TAG;
     protected String DOCUMENT_VIEWING_DIRECTION;
 
 
@@ -116,8 +116,10 @@ public class ManifestV3Service extends AbstractResourceService {
         METADATA_FIELDS = configurationService.getArrayProperty("iiif.metadata.item");
         RENDERING_BUNDLE_NAME = configurationService.getProperty("iiif.rendering.bundle");
         RENDERING_ITEM_LABEL = configurationService.getProperty("iiif.rendering.item");
-        DEFAULT_LANGUAGE = configurationService.getProperty("default.language");
         DOCUMENT_VIEWING_DIRECTION = configurationService.getProperty("iiif.v3.document.viewing.direction");
+        LANGUAGE_TAG = StringUtils.isNotBlank(configurationService.getProperty("dc.language"))
+                    ? configurationService.getProperty("dc.language")
+                    : configurationService.getProperty("default.language");
     }
 
      /**
@@ -132,15 +134,15 @@ public class ManifestV3Service extends AbstractResourceService {
 
             String manifestId = getManifestId(item.getID());
             manifestGenerator.setID(manifestId);
-            manifestGenerator.setLabel(DEFAULT_LANGUAGE,item.getName());
+            manifestGenerator.setLabel(LANGUAGE_TAG,item.getName());
 
             populateManifest(item, context);
 
             // Generate the manifest resource
             Resource<Manifest> manifestResource = manifestGenerator.generateResource();
 
-            //return utils.asJson(manifestResource);
-            return manifestResource.toString();
+            return utils.asJson(manifestResource);
+            //return manifestResource.toString();
         } catch (Exception e) {
             // Handle the exception as needed
             log.error("Error generating JSON for manifest", e);
@@ -158,9 +160,11 @@ public class ManifestV3Service extends AbstractResourceService {
     private void populateManifest(Item item, Context context ) {
         String manifestId = getManifestId(item.getID());
         manifestGenerator.setID(manifestId);
-        manifestGenerator.setLabel(DEFAULT_LANGUAGE, item.getName());
+        manifestGenerator.setLabel(LANGUAGE_TAG, item.getName());
         manifestGenerator.addViewingDirection(DOCUMENT_VIEWING_DIRECTION);
+        addSummary(context, item);
         addMetadata(context, item);
+        addRights(context, item);
         addThumbnail(item, context);
         addSeeAlso(item, context);
         addRendering(item, context);
@@ -198,7 +202,7 @@ public class ManifestV3Service extends AbstractResourceService {
             }
             for (Bitstream bitstream : utils.getIIIFBitstreams(context, bnd)) {
                 // Add the Canvas to the CanvasItemsService.
-                CanvasGenerator canvas = canvasItemsService.addCanvas(context, item, bnd, bitstream, DEFAULT_LANGUAGE);
+                CanvasGenerator canvas = canvasItemsService.addCanvas(context, item, bnd, bitstream, LANGUAGE_TAG);
 
                 // Update the Ranges.
                 rangeService.updateRanges(bitstream, bundleToCPrefix, canvas);
@@ -263,22 +267,41 @@ public class ManifestV3Service extends AbstractResourceService {
             }
             if (values.size() > 0) {
                 if (values.size() > 1) {
-                    manifestGenerator.addMetadata(field, values.get(0));
+                    manifestGenerator.addMetadata(LANGUAGE_TAG, field, values.get(0));
                     for (int i = 1; i < values.size(); i++) {
-                        manifestGenerator.addMetadata(field, values.get(i));
+                        manifestGenerator.addMetadata(LANGUAGE_TAG, field, values.get(i));
                     }
                 } else {
-                    manifestGenerator.addMetadata(field, values.get(0));
+                    manifestGenerator.addMetadata(LANGUAGE_TAG, field, values.get(0));
                 }
             }
 
         }
-        String descrValue = item.getItemService().getMetadataFirstValue(item, "dc", "description", null, Item.ANY);
-        if (StringUtils.isNotBlank(descrValue)) {
-            manifestGenerator.setSummary(descrValue);
-        }
+    }
 
-        String licenseUriValue = item.getItemService().getMetadataFirstValue(item, "dc", "rights", "uri", Item.ANY);
+    /**
+     * Adds the summary to the manifest if it exists in the item's metadata.
+     * The summary is derived from the first value of the "dc.description" field.
+     *
+     * @param context The relevant DSpace context
+     * @param item The item whose summary is to be added to the manifest
+     */
+    private void addSummary(Context context, Item item) {
+        String descrValue = itemService.getMetadataFirstValue(item, "dc", "description", null, Item.ANY);
+        if (StringUtils.isNotBlank(descrValue)) {
+            manifestGenerator.setSummary(LANGUAGE_TAG, descrValue);
+        }
+    }
+
+    /**
+     * Adds the rights information to the manifest if it exists in the item's metadata.
+     * The rights information is derived from the first value of the "dc.rights.uri" field.
+     *
+     * @param context The relevant DSpace context
+     * @param item The item whose rights information is to be added to the manifest
+     */
+    private void addRights(Context context, Item item) {
+        String licenseUriValue = itemService.getMetadataFirstValue(item, "dc", "rights", "uri", Item.ANY);
         if (StringUtils.isNotBlank(licenseUriValue)) {
             manifestGenerator.setRights(licenseUriValue);
         }
@@ -300,27 +323,28 @@ public class ManifestV3Service extends AbstractResourceService {
         }
     }
 
-       /**
-        * This method adds into the manifest one or more {@code seeAlso} reference to additional
-        * resources found in the Item bundle(s). A typical use case would be METS / ALTO files
-        * that describe the resource.
-        *
-        * @param item the DSpace Item.
-        * @param context The DSpace context
-        */
-        private void addSeeAlso(Item item, Context context) {
-            // Use the SeeAlsoService to retrieve ExternalLinksGenerator resources.
-            List<ExternalLinksGenerator> elgs = seeAlsoService.getSeeAlsos(item, context);
+   /**
+    * This method adds into the manifest one or more {@code seeAlso} reference to additional
+    * resources found in the Item bundle(s). A typical use case would be METS / ALTO files
+    * that describe the resource.
+    *
+    * @param item the DSpace Item.
+    * @param context The DSpace context
+    */
+    private void addSeeAlso(Item item, Context context) {
+        // Use the SeeAlsoService to retrieve ExternalLinksGenerator resources.
+        List<ExternalLinksGenerator> elgs = seeAlsoService.getSeeAlsos(item, context);
 
-            if (!elgs.isEmpty()) {
-                for (ExternalLinksGenerator elg : elgs) {
-                    elg.setLangue(DEFAULT_LANGUAGE);
-                    manifestGenerator.addSeeAlso(elg);
-                }
-            } else {
-                log.warn("Aucune ressource trouvée à ajouter dans la section 'seeAlso' du manifeste.");
+        if (!elgs.isEmpty()) {
+            for (ExternalLinksGenerator elg : elgs) {
+                elg.setLangue(LANGUAGE_TAG);
+                manifestGenerator.addSeeAlso(elg);
             }
+        } else {
+            log.warn("Aucune ressource trouvée à ajouter dans la section 'seeAlso' du manifeste.");
         }
+    }
+
     /**
      * This method looks for a PDF in the Item's ORIGINAL bundle and adds
      * it as the Rendering resource if found.
@@ -353,6 +377,7 @@ public class ManifestV3Service extends AbstractResourceService {
                }
            }
     }
+
     /**
      * Generates a list of rendering resources based on the configured properties.
      *
@@ -364,7 +389,7 @@ public class ManifestV3Service extends AbstractResourceService {
     private List<Rendering> generateRenderingList(String id, String type, String label) {
         List<Rendering> renderingList = new ArrayList<>();
         // Create a new Rendering object and add it to the list
-        renderingList.add(new Rendering(id, type, new Label(DEFAULT_LANGUAGE, label)));
+        renderingList.add(new Rendering(id, type, new Label(LANGUAGE_TAG, label)));
         return renderingList;
     }
 

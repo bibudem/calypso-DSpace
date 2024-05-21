@@ -3,6 +3,7 @@ package org.dspace.app.iiif.v3.model.generator;
 import info.freelibrary.iiif.presentation.v3.Manifest;
 import info.freelibrary.iiif.presentation.v3.Resource;
 import info.freelibrary.iiif.presentation.v3.properties.Summary;
+import info.freelibrary.iiif.presentation.v3.properties.I18n;
 import info.freelibrary.iiif.presentation.v3.properties.Label;
 import info.freelibrary.iiif.presentation.v3.properties.Metadata;
 import info.freelibrary.iiif.presentation.v3.properties.Rendering;
@@ -11,6 +12,7 @@ import info.freelibrary.iiif.presentation.v3.properties.SeeAlso;
 import info.freelibrary.iiif.presentation.v3.Range;
 import info.freelibrary.iiif.presentation.v3.Canvas;
 import info.freelibrary.iiif.presentation.v3.properties.ViewingDirection;
+import info.freelibrary.iiif.presentation.v3.properties.Value;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
@@ -38,7 +40,7 @@ public class ManifestV3Generator implements IIIFV3Resource {
     private String identifier;
     private Label label;
     private Summary summary;
-    private URI rightsURI;
+    private String rights;
     private List<Metadata> metadataList;
     private ImageContent thumbnail;
     private List<ExternalLinksGenerator> seeAlsos = new ArrayList<>();
@@ -78,9 +80,10 @@ public class ManifestV3Generator implements IIIFV3Resource {
      *
      * @param summary The summary of the manifest
      */
-    public void setSummary(String summary) {
-        this.summary = new Summary(summary);
+    public void setSummary(String langTag, String value) {
+        this.summary = new Summary(new I18n(langTag, value));
     }
+
 
     /**
      * Adds metadata to the manifest.
@@ -88,9 +91,15 @@ public class ManifestV3Generator implements IIIFV3Resource {
      * @param label The label of the metadata
      * @param value The value of the metadata
      */
-    public void addMetadata(String label, String value) {
-        metadataList.add(new Metadata(label, value));
+    public void addMetadata(String langTag, String labelValue, String value) {
+        Label metadataLabel = new Label(langTag, labelValue);
+        I18n i18nValue = new I18n(langTag, value);
+        Value metadataValue = new Value(i18nValue);
+        metadataList.add(new Metadata(metadataLabel, metadataValue));
     }
+
+
+
 
     /**
      * Sets the rights URI for the manifest.
@@ -98,8 +107,9 @@ public class ManifestV3Generator implements IIIFV3Resource {
      * @param rights The URI of the rights statement
      */
     public void setRights(String rights) {
-        this.rightsURI = URI.create(rights);
+        this.rights = rights;
     }
+
 
     /**
      * Adds a thumbnail to the manifest.
@@ -178,6 +188,10 @@ public class ManifestV3Generator implements IIIFV3Resource {
 
         if (summary != null) {
             manifest.setSummary(summary);
+        }
+
+        if (rights != null) {
+            manifest.setRights(rights);
         }
 
         if (!seeAlsos.isEmpty()) {

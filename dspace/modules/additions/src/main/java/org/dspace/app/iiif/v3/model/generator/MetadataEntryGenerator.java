@@ -9,15 +9,11 @@ package org.dspace.app.iiif.v3.model.generator;
 
 import info.freelibrary.iiif.presentation.v3.properties.Metadata;
 import info.freelibrary.iiif.presentation.v3.properties.Value;
+import info.freelibrary.iiif.presentation.v3.properties.I18n;
 import info.freelibrary.iiif.presentation.v3.properties.Label;
 import org.dspace.core.I18nUtil;
 
-/**
- * Wraps the domain model metadata property.
- *
- * @author Michael Spalti  mspalti@willamette.edu
- * @author Andrea Bollini (andrea.bollini at 4science.it)
- */
+
 public class MetadataEntryGenerator implements IIIFValue {
 
     private String field;
@@ -43,16 +39,28 @@ public class MetadataEntryGenerator implements IIIFValue {
         return this;
     }
 
-    @Override
-    public Metadata generateValue() {
+    /**
+     * Generate a metadata entry with language tag.
+     * @param langTag The language tag for the metadata entry
+     * @return The generated metadata
+     */
+    public Metadata generateValue(String langTag) {
         Value metadataValues;
         if (rest != null && rest.length > 0) {
-            metadataValues = new Value(rest);
+            I18n i18nValue = new I18n(langTag, rest[0]);
+            metadataValues = new Value(i18nValue);
         } else {
-            metadataValues = new Value(value);
+            I18n i18nValue = new I18n(langTag, value);
+            metadataValues = new Value(i18nValue);
         }
-        Label label = new Label(I18nUtil.getMessage("metadata." + field));
+        Label label = new Label(langTag, I18nUtil.getMessage("metadata." + field));
         return new Metadata(label, metadataValues);
     }
 
+
+    @Override
+    public Metadata generateValue() {
+        // Using a default language tag if not specified
+        return generateValue("en");
+    }
 }
