@@ -95,7 +95,7 @@
         </dependency>
 
 
-        <!-- iiif models. -->
+        <!-- iiif models v2. -->
         <dependency>
             <groupId>de.digitalcollections.iiif</groupId>
             <artifactId>iiif-apis</artifactId>
@@ -124,6 +124,20 @@
                 <exclusion>
                     <groupId>com.fasterxml.jackson.datatype</groupId>
                     <artifactId>jackson-datatype-jsr310</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- iiif models v3. -->
+        <dependency>
+            <groupId>info.freelibrary</groupId>
+            <artifactId>jiiify-presentation-v3</artifactId>
+            <version>0.12.4</version>
+            <exclusions>
+                <!-- Exclure la dépendance jackson-datatype-jdk8 car donne des erreurs de dépendences -->
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.datatype</groupId>
+                    <artifactId>jackson-datatype-jdk8</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

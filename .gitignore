@@ -46,6 +46,7 @@ rebel.xml
 
 ## Ignore jenv configuration
 .java-version
+
 # Directories generated as a result of compilation
 /assetstore
 /lib
