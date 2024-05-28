@@ -14,6 +14,7 @@ import org.dspace.content.Item;
 import org.dspace.content.service.BitstreamService;
 import org.dspace.content.service.ItemService;
 import org.dspace.app.iiif.v3.service.ManifestV3Service;
+import org.dspace.app.iiif.v3.service.CanvasLookupService;
 import org.dspace.core.Context;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -49,6 +50,9 @@ public class IIIFV3ServiceFacade {
     @Autowired
     IIIFUtils utils;
 
+    @Autowired
+    CanvasLookupService canvasLookupService;
+
     private static final Log log = LogFactory.getLog(IIIFV3ServiceFacade.class);
 
     /**
@@ -80,6 +84,30 @@ public class IIIFV3ServiceFacade {
         log.info("Item récupéré: " + item.getName());
 
         return manifestService.getManifest(item, context);
+    }
+
+    /**
+     * The canvas represents an individual page or view and acts as a central point for
+     * laying out the different content resources that make up the display. This information
+     * should be embedded within a sequence.
+     *
+     * @param id DSpace item uuid
+     * @param canvasId canvas identifier
+     * @return canvas as JSON
+     */
+    @PreAuthorize("hasPermission(#id, 'ITEM', 'READ')")
+    public String getCanvas(Context context, UUID id, String canvasId)
+            throws ResourceNotFoundException {
+        Item item;
+        try {
+            item = itemService.find(context, id);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+        if (item == null) {
+            throw new ResourceNotFoundException("IIIF canvas for  id " + id + " not found");
+        }
+        return canvasLookupService.generateCanvas(context, item, canvasId);
     }
 
 }

@@ -203,7 +203,7 @@ public class CanvasService extends AbstractResourceService {
                     thumbUtil.getThumbnailProfile(), THUMBNAIL_PATH);
 
             return addMetadata(DEFAULT_LANGUAGE, context, bitstream,
-                    new CanvasGenerator(IIIF_ENDPOINT + itemId + "/canvas/c" + count)
+                    new CanvasGenerator(IIIF_ENDPOINT + itemId + "/canvas/c" + count+ "/v3")
                         .addImage(image.generateResource()).addThumbnail(thumb.generateResource()).setWidthHeight(canvasWidth, canvasHeight)
                         .addThumbnail(thumb.generateResource())
                         .setWidthHeight(canvasWidth, canvasHeight).setLabel(label));

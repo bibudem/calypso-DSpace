@@ -396,5 +396,38 @@ public class IIIFUtils {
      }
 
 
+     /**
+      * Return all the bitstreams in the item to be used as annotations
+      *
+      * @param item    the DSpace item
+      * @return a not null list of bitstreams to use as IIIF resources in the
+      *         manifest
+      */
+     public List<Bitstream> getSeeAlsoBitstreams(Item item) {
+         List<Bitstream> seeAlsoBitstreams = new ArrayList<>();
+         List<Bundle> bundles = item.getBundles(OTHER_CONTENT_BUNDLE);
+         if (bundles.size() > 0) {
+             for (Bundle bundle : bundles) {
+                 List<Bitstream> bitstreams = bundle.getBitstreams();
+                 seeAlsoBitstreams.addAll(bitstreams);
+             }
+         }
+         return seeAlsoBitstreams;
+     }
+
+      /**
+      * Check a String (filename) and returns the portion before the last occurrence of "."
+      * @param name  The String to check
+      * @return  The portion before ".", or the string itself if not found
+      */
+     public static String getRootName(String name) {
+         String root = name;
+         int dotPos = root.lastIndexOf(".");
+         if (dotPos > 0) {
+             root = name.substring(0, dotPos);
+         }
+         return root;
+     }
+
 
 }

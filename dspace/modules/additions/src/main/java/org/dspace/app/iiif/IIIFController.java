@@ -144,4 +144,22 @@ public class IIIFController {
       Context context = ContextUtil.obtainCurrentRequestContext();
       return iiifV3Facade.getManifest(context, id);
   }
+
+   /**
+   * The canvas represents an individual page or view and acts as a central point for
+   * laying out the different content resources that make up the display. This information
+   * should be embedded within a sequence.
+   *
+   * This endpoint allows canvases to be dereferenced separately from the manifest. This
+   * is an atypical use case.
+   *
+   * @param id DSpace Item uuid
+   * @param cid canvas identifier
+   * @return canvas as JSON
+   */
+  @RequestMapping(method = RequestMethod.GET, value = "/{id}/canvas/{cid}/v3", produces = "application/json")
+  public String findCanvasV3(@PathVariable UUID id, @PathVariable String cid) {
+      Context context = ContextUtil.obtainCurrentRequestContext();
+      return iiifV3Facade.getCanvas(context, id, cid);
+  }
 }

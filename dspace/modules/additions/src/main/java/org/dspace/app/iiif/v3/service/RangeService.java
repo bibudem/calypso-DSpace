@@ -28,8 +28,6 @@ import org.springframework.web.context.annotation.RequestScope;
  * per request. The {@code @RequestScope} provides a single instance created and available during complete lifecycle
  * of the HTTP request.
  *
- * @author Michael Spalti  mspalti@willamette.edu
- * @author Andrea Bollini (andrea.bollini at 4science.it)
  */
 @RequestScope
 @Component("RangeServiceV3")
