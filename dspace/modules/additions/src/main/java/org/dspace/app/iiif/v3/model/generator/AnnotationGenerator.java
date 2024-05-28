@@ -5,12 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import info.freelibrary.iiif.presentation.v3.Annotation;
-import info.freelibrary.iiif.presentation.v3.PaintingAnnotation;
 import info.freelibrary.iiif.presentation.v3.AnnotationBody;
-import info.freelibrary.iiif.presentation.v3.Canvas;
-import info.freelibrary.iiif.presentation.v3.Manifest;
+import info.freelibrary.iiif.presentation.v3.PaintingAnnotation;
 import info.freelibrary.iiif.presentation.v3.Resource;
+import info.freelibrary.iiif.presentation.v3.properties.Metadata;
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -24,13 +22,12 @@ public class AnnotationGenerator implements IIIFV3Resource {
     private CanvasGenerator canvasGenerator;
     private ContentAsTextGenerator contentAsTextGenerator;
     private ExternalLinksGenerator externalLinksGenerator;
-    private List<Manifest> manifests = new ArrayList<>();
+    private List<MetadataEntryGenerator> metadataGenerators = new ArrayList<>();
 
     public static final String TYPE = "sc:AnnotationList";
     public static final String PAINTING = "sc:painting";
     public static final String COMMENTING = "oa:commenting";
     public static final String LINKING = "oa:linking";
-
 
     public AnnotationGenerator(@NotNull String identifier) {
         if (identifier.isEmpty()) {
@@ -89,16 +86,14 @@ public class AnnotationGenerator implements IIIFV3Resource {
     }
 
     /**
-     * Set the within property for this annotation. This property is a list of manifests. The property is renamed to partOf in v3.
+     * Set the within property for this annotation. This property is a list of metadata entries.
      * Used by search result annotations.
      *
-     * @param within the list of manifests
+     * @param metadataGenerators the list of metadata generators
      * @return this {@code AnnotationGenerator}
      */
-    public AnnotationGenerator setWithin(List<ManifestV3Generator> within) {
-        for (ManifestV3Generator manifest : within) {
-            this.manifests.add((Manifest) manifest.generateResource());
-        }
+    public AnnotationGenerator setMetadata(List<MetadataEntryGenerator> metadataGenerators) {
+        this.metadataGenerators.addAll(metadataGenerators);
         return this;
     }
 
@@ -109,8 +104,8 @@ public class AnnotationGenerator implements IIIFV3Resource {
         }
         PaintingAnnotation annotationPage = new PaintingAnnotation(URI.create(identifier), null);
 
-        // Remplacer les annotations manquantes par une liste vide pour éviter les erreurs
         List<AnnotationBody<?>> annotationBodies = new ArrayList<>();
+
         if (canvasGenerator != null) {
             annotationBodies.add((AnnotationBody<?>) canvasGenerator.generateResource());
         }
@@ -120,8 +115,15 @@ public class AnnotationGenerator implements IIIFV3Resource {
         if (externalLinksGenerator != null) {
             annotationBodies.add((AnnotationBody<?>) externalLinksGenerator.generateSeeAlsoList());
         }
+
         annotationPage.setBodies(annotationBodies);
+
+        if (!metadataGenerators.isEmpty()) {
+            List<Metadata> metadataList = metadataGenerators.stream()
+                    .map(MetadataEntryGenerator::generateValue)
+                    .collect(Collectors.toList());
+            annotationPage.setMetadata(metadataList);
+        }
         return annotationPage;
     }
-
 }
