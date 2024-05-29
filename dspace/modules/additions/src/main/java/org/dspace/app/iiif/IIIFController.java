@@ -21,8 +21,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.dspace.app.iiif.v3.IIIFV3ServiceFacade;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * Controller for IIIF Presentation and Search API.
@@ -35,7 +33,6 @@ import org.apache.commons.logging.LogFactory;
 // Only enable this controller if "iiif.enabled=true"
 @ConditionalOnProperty("iiif.enabled")
 public class IIIFController {
-    private static final Log log = LogFactory.getLog(IIIFController.class);
 
     @Autowired
     IIIFServiceFacade iiifFacade;
