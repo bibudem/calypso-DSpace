@@ -429,5 +429,15 @@ public class IIIFUtils {
          return root;
      }
 
+     /**
+      * Retrieves the ConfigurationService instance.
+      *
+      * @return ConfigurationService instance
+      */
+     public ConfigurationService getConfigurationService() {
+         return configurationService;
+     }
+
+
 
 }

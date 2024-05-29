@@ -9,7 +9,7 @@ package org.dspace.app.iiif;
 
 import java.util.UUID;
 
-import org.dspace.app.iiif.service.utils.IIIFUtils;
+import org.dspace.app.iiif.v3.service.utils.IIIFUtils;
 import org.dspace.core.Context;
 import org.dspace.web.ContextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.dspace.app.iiif.v3.IIIFV3ServiceFacade;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Controller for IIIF Presentation and Search API.
@@ -34,6 +35,7 @@ import org.dspace.app.iiif.v3.IIIFV3ServiceFacade;
 // Only enable this controller if "iiif.enabled=true"
 @ConditionalOnProperty("iiif.enabled")
 public class IIIFController {
+    private static final Log log = LogFactory.getLog(IIIFController.class);
 
     @Autowired
     IIIFServiceFacade iiifFacade;
@@ -41,24 +43,103 @@ public class IIIFController {
     @Autowired
     IIIFV3ServiceFacade iiifV3Facade;
 
+    @Autowired
+    IIIFUtils utils;
+
     /**
+     * Retrieves the manifest for a single DSpace item.
+     *
      * The manifest response contains sufficient information for the client to initialize
      * itself and begin to display something quickly to the user. The manifest resource
      * represents a single object and any intellectual work or works embodied within that
-     * object. In particular it includes the descriptive, rights and linking information
+     * object. In particular, it includes the descriptive, rights, and linking information
      * for the object. It then embeds the sequence(s) of canvases that should be rendered
-     * to the user.
+     * to the user for v2.
      *
      * Called with GET to retrieve the manifest for a single DSpace item.
      *
-     * @param id DSpace Item uuid
-     * @return manifest as JSON
+     * @param id DSpace Item UUID
+     * @return Manifest as JSON
      */
     @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest", produces = "application/json")
     public String findOne(@PathVariable UUID id) {
         Context context = ContextUtil.obtainCurrentRequestContext();
+
+        String iiifV3Config = utils.getConfigurationService().getProperty("iiif.v3");
+        iiifV3Config = iiifV3Config != null ? iiifV3Config.trim() : "false";
+
+        boolean isIIIFV3Enabled = Boolean.parseBoolean(iiifV3Config);
+
+        if (isIIIFV3Enabled) {
+            return iiifV3Facade.getManifest(context, id);
+        } else {
+            return iiifFacade.getManifest(context, id);
+        }
+    }
+
+
+    /**
+     * Retrieves the manifest for a single DSpace item in version 2 of the IIIF Presentation API.
+     *
+     * @param id DSpace Item UUID
+     * @return Manifest as JSON
+     */
+    @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest/v2", produces = "application/json")
+    public String findManifestV2(@PathVariable UUID id) {
+        Context context = ContextUtil.obtainCurrentRequestContext();
         return iiifFacade.getManifest(context, id);
     }
+
+    /**
+     * Retrieves the manifest for a single DSpace item in version 3 of the IIIF Presentation API.
+     *
+     * @param id DSpace Item UUID
+     * @return Manifest as JSON
+     */
+    @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest/v3", produces = "application/json")
+    public String findManifestV3(@PathVariable UUID id) {
+        Context context = ContextUtil.obtainCurrentRequestContext();
+        return iiifV3Facade.getManifest(context, id);
+    }
+
+    /**
+     * The canvas represents an individual page or view and acts as a central point for
+     * laying out the different content resources that make up the display. This information
+     * should be embedded within a sequence.
+     *
+     * This endpoint allows canvases to be dereferenced separately from the manifest. This
+     * is an atypical use case.
+     *
+     * @param id DSpace Item uuid
+     * @param cid canvas identifier
+     * @return canvas as JSON
+     */
+    @RequestMapping(method = RequestMethod.GET, value = "/{id}/canvas/{cid}", produces = "application/json")
+    public String findCanvas(@PathVariable UUID id, @PathVariable String cid) {
+        Context context = ContextUtil.obtainCurrentRequestContext();
+        return iiifFacade.getCanvas(context, id, cid);
+    }
+     /**
+     * Retrieves the canvas in version 3 of the IIIF Presentation API.
+     *
+     * The canvas represents an individual page or view and acts as a central point for
+     * laying out the different content resources that make up the display. This information
+     * should be embedded within a sequence.
+     *
+     * This endpoint allows canvases to be dereferenced separately from the manifest. This
+     * is an atypical use case.
+     *
+     * @param id  The DSpace Item UUID
+     * @param cid The canvas identifier
+     * @return The canvas as JSON
+    */
+    @RequestMapping(method = RequestMethod.GET, value = "/{id}/canvas/{cid}/v3", produces = "application/json")
+    public String findCanvasV3(@PathVariable UUID id, @PathVariable String cid) {
+      Context context = ContextUtil.obtainCurrentRequestContext();
+      return iiifV3Facade.getCanvas(context, id, cid);
+    }
+
+
 
     /**
      * Any resource in the Presentation API may have a search service associated with it.
@@ -100,23 +181,6 @@ public class IIIFController {
         return iiifFacade.getSeeAlsoAnnotations(context, id);
     }
 
-    /**
-     * The canvas represents an individual page or view and acts as a central point for
-     * laying out the different content resources that make up the display. This information
-     * should be embedded within a sequence.
-     *
-     * This endpoint allows canvases to be dereferenced separately from the manifest. This
-     * is an atypical use case.
-     *
-     * @param id DSpace Item uuid
-     * @param cid canvas identifier
-     * @return canvas as JSON
-     */
-    @RequestMapping(method = RequestMethod.GET, value = "/{id}/canvas/{cid}", produces = "application/json")
-    public String findCanvas(@PathVariable UUID id, @PathVariable String cid) {
-        Context context = ContextUtil.obtainCurrentRequestContext();
-        return iiifFacade.getCanvas(context, id, cid);
-    }
 
     /**
      * Any bitstream may have transcriptions attached to it. This URL will return an
@@ -133,33 +197,6 @@ public class IIIFController {
         return iiifFacade.getTranscriptions(context, iId, bId, cId, iId + "/" + bId + "/" + cId + "/transcriptions");
     }
 
-  /**
-   * Endpoint pour récupérer le manifest V3
-   *
-   * @param id UUID de l'élément DSpace
-   * @return manifest en JSON
-   */
-  @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest/v3", produces = "application/json")
-  public String findManifestV3(@PathVariable UUID id) {
-      Context context = ContextUtil.obtainCurrentRequestContext();
-      return iiifV3Facade.getManifest(context, id);
-  }
 
-   /**
-   * The canvas represents an individual page or view and acts as a central point for
-   * laying out the different content resources that make up the display. This information
-   * should be embedded within a sequence.
-   *
-   * This endpoint allows canvases to be dereferenced separately from the manifest. This
-   * is an atypical use case.
-   *
-   * @param id DSpace Item uuid
-   * @param cid canvas identifier
-   * @return canvas as JSON
-   */
-  @RequestMapping(method = RequestMethod.GET, value = "/{id}/canvas/{cid}/v3", produces = "application/json")
-  public String findCanvasV3(@PathVariable UUID id, @PathVariable String cid) {
-      Context context = ContextUtil.obtainCurrentRequestContext();
-      return iiifV3Facade.getCanvas(context, id, cid);
-  }
+
 }
