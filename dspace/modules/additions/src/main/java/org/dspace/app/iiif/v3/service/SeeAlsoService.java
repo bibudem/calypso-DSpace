@@ -1,3 +1,10 @@
+/**
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree and available online at
+ *
+ * http://www.dspace.org/license/
+ */
 package org.dspace.app.iiif.v3.service;
 
 import info.freelibrary.iiif.presentation.v3.properties.SeeAlso;
@@ -21,8 +28,9 @@ import java.util.List;
 /**
  * A service for generating SeeAlso resources.
  */
-@Component("SeeAlsoServiceV3")
+
 @RequestScope
+@Component("SeeAlsoServiceV3")
 public class SeeAlsoService extends AbstractResourceService {
 
     private static final Log log = LogFactory.getLog(SeeAlsoService.class);

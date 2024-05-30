@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import info.freelibrary.iiif.presentation.v3.services.ImageService3;
 
 
-@Component("ThumbProfileUtil iiifv3")
+@Component("ThumbProfileUtilV3")
 public class ThumbProfileUtil {
 
     @Autowired

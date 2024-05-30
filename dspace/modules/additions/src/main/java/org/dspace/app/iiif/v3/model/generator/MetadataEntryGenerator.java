@@ -14,7 +14,7 @@ import info.freelibrary.iiif.presentation.v3.properties.Label;
 import org.dspace.core.I18nUtil;
 
 
-public class MetadataEntryGenerator implements IIIFValue {
+public class MetadataEntryGenerator  {
 
     private String field;
     private String value;
@@ -55,12 +55,5 @@ public class MetadataEntryGenerator implements IIIFValue {
         }
         Label label = new Label(langTag, I18nUtil.getMessage("metadata." + field));
         return new Metadata(label, metadataValues);
-    }
-
-
-    @Override
-    public Metadata generateValue() {
-        // Using a default language tag if not specified
-        return generateValue("en");
     }
 }

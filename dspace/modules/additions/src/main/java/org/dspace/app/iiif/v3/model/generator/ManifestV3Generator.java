@@ -1,3 +1,10 @@
+/**
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree and available online at
+ *
+ * http://www.dspace.org/license/
+ */
 package org.dspace.app.iiif.v3.model.generator;
 
 import info.freelibrary.iiif.presentation.v3.Manifest;
@@ -84,7 +91,6 @@ public class ManifestV3Generator implements IIIFV3Resource {
         this.summary = new Summary(new I18n(langTag, value));
     }
 
-
     /**
      * Adds metadata to the manifest.
      *
@@ -98,9 +104,6 @@ public class ManifestV3Generator implements IIIFV3Resource {
         metadataList.add(new Metadata(metadataLabel, metadataValue));
     }
 
-
-
-
     /**
      * Sets the rights URI for the manifest.
      *
@@ -109,7 +112,6 @@ public class ManifestV3Generator implements IIIFV3Resource {
     public void setRights(String rights) {
         this.rights = rights;
     }
-
 
     /**
      * Adds a thumbnail to the manifest.
@@ -158,7 +160,6 @@ public class ManifestV3Generator implements IIIFV3Resource {
            this.canvas.add(canvasResource);
        }
    }
-
 
     /**
      * Sets the viewing direction. In the context of IIIF Presentation API version 3.0, this becomes the "behavior" of the manifest.
@@ -219,7 +220,6 @@ public class ManifestV3Generator implements IIIFV3Resource {
         if (viewingDirection != null) {
             manifest.setViewingDirection(viewingDirection);
         }
-
 
         return manifest;
     }

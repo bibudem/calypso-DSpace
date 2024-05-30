@@ -1,7 +1,10 @@
-/*
- * Date: 2024-05-08
+/**
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree and available online at
+ *
+ * http://www.dspace.org/license/
  */
-
 package org.dspace.app.iiif.v3.service;
 
 import org.apache.logging.log4j.Logger;
@@ -20,9 +23,6 @@ import org.springframework.web.context.annotation.RequestScope;
 import java.util.List;
 import java.util.ArrayList;
 import org.dspace.content.Bundle;
-
-
-
 
 @RequestScope
 @Component("CanvasItemsServiceV3")
@@ -49,26 +49,26 @@ public class CanvasItemsService extends AbstractResourceService {
     }
 
     /**
-     * Get the sequence for the specified item.
-     *
-     * @param item The DSpace item.
-     * @return The canvas items generator.
-     */
+    * Get the sequence for the specified item.
+    *
+    * @param item The DSpace item.
+    * @return The canvas items generator.
+    */
     public CanvasItemsGenerator getCanvasItem(Item item) {
         itemGenerator.setIdentifier(IIIF_ENDPOINT + item.getID() + "/item/i0");
         return itemGenerator;
     }
 
 
-      /**
-     * Add a canvas to the sequence for the specified item.
-     *
-     * @param context    The DSpace context.
-     * @param item       The DSpace item.
-     * @param bnd        The DSpace bundle.
-     * @param bitstream  The DSpace bitstream.
-     * @return The canvas generator.
-     */
+    /**
+    * Add a canvas to the sequence for the specified item.
+    *
+    * @param context    The DSpace context.
+    * @param item       The DSpace item.
+    * @param bnd        The DSpace bundle.
+    * @param bitstream  The DSpace bitstream.
+    * @return The canvas generator.
+    */
     public CanvasGenerator addCanvas(Context context, Item item, Bundle bnd, Bitstream bitstream, String DEFAULT_LANGUAGE) {
         String mimeType = utils.getBitstreamMimeType(bitstream, context);
         String manifestId = item.getID().toString();
@@ -78,6 +78,5 @@ public class CanvasItemsService extends AbstractResourceService {
         counter++;
         return canvasGenerator;
     }
-
 
 }

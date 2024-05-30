@@ -43,37 +43,36 @@ public class IIIFController {
     @Autowired
     IIIFUtils utils;
 
+
     /**
-     * Retrieves the manifest for a single DSpace item.
+     * Retrieves the manifest for a single DSpace item based on the IIIF version configuration.
      *
-     * The manifest response contains sufficient information for the client to initialize
-     * itself and begin to display something quickly to the user. The manifest resource
-     * represents a single object and any intellectual work or works embodied within that
-     * object. In particular, it includes the descriptive, rights, and linking information
-     * for the object. It then embeds the sequence(s) of canvases that should be rendered
-     * to the user for v2.
-     *
-     * Called with GET to retrieve the manifest for a single DSpace item.
+     * This method checks the configuration to determine if the IIIF version 3 is enabled.
+     * If enabled, it returns the manifest using the IIIFV3ServiceFacade.
+     * Otherwise, it returns the manifest using the IIIFServiceFacade for version 2.
      *
      * @param id DSpace Item UUID
      * @return Manifest as JSON
      */
     @RequestMapping(method = RequestMethod.GET, value = "/{id}/manifest", produces = "application/json")
     public String findOne(@PathVariable UUID id) {
+        // Obtain the current DSpace context
         Context context = ContextUtil.obtainCurrentRequestContext();
 
+        // Retrieve the IIIF version 3 configuration property
         String iiifV3Config = utils.getConfigurationService().getProperty("iiif.v3");
         iiifV3Config = iiifV3Config != null ? iiifV3Config.trim() : "false";
 
+        // Parse the configuration property to a boolean
         boolean isIIIFV3Enabled = Boolean.parseBoolean(iiifV3Config);
 
+        // Return the manifest based on the IIIF version configuration
         if (isIIIFV3Enabled) {
             return iiifV3Facade.getManifest(context, id);
         } else {
             return iiifFacade.getManifest(context, id);
         }
     }
-
 
     /**
      * Retrieves the manifest for a single DSpace item in version 2 of the IIIF Presentation API.

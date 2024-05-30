@@ -1,3 +1,10 @@
+/**
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree and available online at
+ *
+ * http://www.dspace.org/license/
+ */
 package org.dspace.app.iiif.v3.model.generator;
 
 import java.net.URI;
@@ -28,6 +35,8 @@ public class AnnotationGenerator implements IIIFV3Resource {
     public static final String PAINTING = "sc:painting";
     public static final String COMMENTING = "oa:commenting";
     public static final String LINKING = "oa:linking";
+    private String LANGUAGE_TAG;
+
 
     public AnnotationGenerator(@NotNull String identifier) {
         if (identifier.isEmpty()) {
@@ -36,9 +45,10 @@ public class AnnotationGenerator implements IIIFV3Resource {
         this.identifier = identifier;
     }
 
-    public AnnotationGenerator(@NotNull String identifier, @NotNull String motivation) {
+    public AnnotationGenerator(@NotNull String identifier, String languageTag) {
         this(identifier);
-        this.motivation = motivation;
+        this.LANGUAGE_TAG = languageTag;
+        this.identifier = identifier;
     }
 
     /**
@@ -47,7 +57,7 @@ public class AnnotationGenerator implements IIIFV3Resource {
      * @param motivation the motivation
      * @return this {@code AnnotationGenerator}
      */
-    public AnnotationGenerator setMotivation(@NotNull String motivation) {
+    public AnnotationGenerator setMotivation(String motivation) {
         this.motivation = motivation;
         return this;
     }
@@ -120,7 +130,7 @@ public class AnnotationGenerator implements IIIFV3Resource {
 
         if (!metadataGenerators.isEmpty()) {
             List<Metadata> metadataList = metadataGenerators.stream()
-                    .map(MetadataEntryGenerator::generateValue)
+                    .map(generator -> generator.generateValue(LANGUAGE_TAG))
                     .collect(Collectors.toList());
             annotationPage.setMetadata(metadataList);
         }

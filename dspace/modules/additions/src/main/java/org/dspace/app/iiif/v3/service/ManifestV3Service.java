@@ -1,3 +1,10 @@
+/**
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree and available online at
+ *
+ * http://www.dspace.org/license/
+ */
 package org.dspace.app.iiif.v3.service;
 
 import java.sql.SQLException;
@@ -144,7 +151,6 @@ public class ManifestV3Service extends AbstractResourceService {
             return utils.asJson(manifestResource);
             //return manifestResource.toString();
         } catch (Exception e) {
-            // Handle the exception as needed
             log.error("Error generating JSON for manifest", e);
             return null;
         }
@@ -294,12 +300,12 @@ public class ManifestV3Service extends AbstractResourceService {
     }
 
     /**
-     * Adds the rights information to the manifest if it exists in the item's metadata.
-     * The rights information is derived from the first value of the "dc.rights.uri" field.
-     *
-     * @param context The relevant DSpace context
-     * @param item The item whose rights information is to be added to the manifest
-     */
+    * Adds the rights information to the manifest if it exists in the item's metadata.
+    * The rights information is derived from the first value of the "dc.rights.uri" field.
+    *
+    * @param context The relevant DSpace context
+    * @param item The item whose rights information is to be added to the manifest
+    */
     private void addRights(Context context, Item item) {
         String licenseUriValue = itemService.getMetadataFirstValue(item, "dc", "rights", "uri", Item.ANY);
         if (StringUtils.isNotBlank(licenseUriValue)) {
@@ -346,12 +352,12 @@ public class ManifestV3Service extends AbstractResourceService {
     }
 
     /**
-     * This method looks for a PDF in the Item's ORIGINAL bundle and adds
-     * it as the Rendering resource if found.
-     *
-     * @param item    DSpace Item
-     * @param context DSpace context
-     */
+    * This method looks for a PDF in the Item's ORIGINAL bundle and adds
+    * it as the Rendering resource if found.
+    *
+    * @param item    DSpace Item
+    * @param context DSpace context
+    */
     private void addRendering(Item item, Context context) {
         List<Bundle> bundles = utils.getIIIFBundles(item);
            if (item != null && context != null && bundles != null ) {
@@ -379,13 +385,13 @@ public class ManifestV3Service extends AbstractResourceService {
     }
 
     /**
-     * Generates a list of rendering resources based on the configured properties.
-     *
-     * @param id     The ID of the rendering resource
-     * @param type   The MIME type of the rendering resource
-     * @param label  The label of the rendering resource
-     * @return A list of rendering resources
-     */
+    * Generates a list of rendering resources based on the configured properties.
+    *
+    * @param id     The ID of the rendering resource
+    * @param type   The MIME type of the rendering resource
+    * @param label  The label of the rendering resource
+    * @return A list of rendering resources
+    */
     private List<Rendering> generateRenderingList(String id, String type, String label) {
         List<Rendering> renderingList = new ArrayList<>();
         // Create a new Rendering object and add it to the list

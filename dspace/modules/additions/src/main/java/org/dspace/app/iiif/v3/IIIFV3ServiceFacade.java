@@ -24,16 +24,10 @@ import org.springframework.stereotype.Service;
 
 import org.dspace.app.iiif.service.utils.IIIFUtils;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 
 
 /**
  * IIIF Service facade to support IIIF Presentation and Search API requests.
- *
- * @author Michael Spalti  mspalti@willamette.edu
- * @author Andrea Bollini (andrea.bollini at 4science.it)
  */
 @Service
 public class IIIFV3ServiceFacade {
@@ -52,8 +46,6 @@ public class IIIFV3ServiceFacade {
 
     @Autowired
     CanvasLookupService canvasLookupService;
-
-    private static final Log log = LogFactory.getLog(IIIFV3ServiceFacade.class);
 
     /**
      * The manifest response contains sufficient information for the client to initialize itself
@@ -80,8 +72,6 @@ public class IIIFV3ServiceFacade {
         if (item == null || !utils.isIIIFEnabled(item)) {
             throw new ResourceNotFoundException("IIIF manifest for id " + id + " not found");
         }
-        // Ajout d'une console pour vérifier si l'élément est correctement récupéré
-        log.info("Item récupéré: " + item.getName());
 
         return manifestService.getManifest(item, context);
     }

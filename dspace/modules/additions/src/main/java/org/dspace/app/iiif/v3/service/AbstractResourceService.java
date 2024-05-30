@@ -18,8 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * Base class for services.
  *
- * @author Michael Spalti  mspalti@willamette.edu
- * @author Andrea Bollini (andrea.bollini at 4science.it)
  */
 public abstract class AbstractResourceService {
     /**
@@ -59,9 +57,9 @@ public abstract class AbstractResourceService {
 
 
     /**
-     * Set constants using DSpace configuration definitions.
-     * @param configurationService the DSpace configuration service
-     */
+    * Set constants using DSpace configuration definitions.
+    * @param configurationService the DSpace configuration service
+    */
     protected void setConfiguration(ConfigurationService configurationService) {
         this.configurationService = configurationService;
         IIIF_ENDPOINT = configurationService.getProperty("dspace.server.url") + "/iiif/";
@@ -81,13 +79,12 @@ public abstract class AbstractResourceService {
     }
 
     /**
-     * Creates the manifest id from the provided uuid.
-     * @param uuid the item id
-     * @return the manifest identifier (url)
-     */
+    * Creates the manifest id from the provided uuid.
+    * @param uuid the item id
+    * @return the manifest identifier (url)
+    */
     protected String getManifestId(UUID uuid) {
         return IIIF_ENDPOINT + uuid + "/manifest";
     }
-
 
 }

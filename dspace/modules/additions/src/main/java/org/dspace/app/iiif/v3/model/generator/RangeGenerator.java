@@ -33,6 +33,12 @@ public class RangeGenerator implements IIIFV3Resource {
         this.rangeService = rangeService;
     }
 
+    /**
+     * Sets the identifier for the IIIF Range
+     *
+     * @param identifier The identifier to set
+     * @return The RangeGenerator object
+     */
     public RangeGenerator setID(@NotNull String identifier) {
         if (identifier.isEmpty()) {
             throw new RuntimeException("Invalid range identifier. Cannot be an empty string.");
@@ -41,31 +47,64 @@ public class RangeGenerator implements IIIFV3Resource {
         return this;
     }
 
+    /**
+     * Gets the identifier for the IIIF Range
+     *
+     * @return The identifier for the IIIF Range
+     */
     public String getID() {
         return identifier;
     }
 
+    /**
+     * Sets the label for the IIIF Range
+     *
+     * @param label The label to set
+     * @return The RangeGenerator object
+     */
     public RangeGenerator setLabel(String label) {
         this.label = label;
         return this;
     }
 
+    /**
+     * Adds a viewing direction for the IIIF Range
+     *
+     * @param viewing The viewing direction to add
+     * @return The RangeGenerator object
+     */
     public RangeGenerator addViewingDirection(ViewingDirection viewing) {
         viewingDirection.add(viewing);
         return this;
     }
 
+    /**
+     * Adds a canvas to the IIIF Range
+     *
+     * @param canvas The canvas to add
+     * @return The RangeGenerator object
+     */
     public RangeGenerator addCanvas(CanvasGenerator canvas) {
        canvasList.add(new Item((Canvas) canvas.generateResource()));
        return this;
    }
 
+   /**
+    * Adds a sub-range to the IIIF Range
+    *
+    * @param range The sub-range to add
+    */
    public void addSubRange(RangeGenerator range) {
        range.setID(identifier + "-" + rangesList.size());
        RangeGenerator rangeReference = rangeService.getRangeReference(range);
        rangesList.add(new Item((Range) rangeReference.generateResource()));
    }
 
+    /**
+     * Generates a Resource object representing the IIIF Range
+     *
+     * @return A Resource object representing the IIIF Range
+     */
     @Override
     public Resource<Range> generateResource() {
         if (identifier == null) {

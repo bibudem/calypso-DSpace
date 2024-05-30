@@ -1,3 +1,10 @@
+/**
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree and available online at
+ *
+ * http://www.dspace.org/license/
+ */
 package org.dspace.app.iiif.v3.service;
 
 import java.io.ByteArrayOutputStream;
@@ -57,9 +64,15 @@ public class AnnotationListService  extends AbstractResourceService {
 
     private String TRANSCRIPTIONS_BUNDLE_NAME = null;
 
+    private String LANGUAGE_TAG;
+
     public AnnotationListService(ConfigurationService configurationService) {
         TRANSCRIPTIONS_BUNDLE_NAME = configurationService.getProperty("iiif.transcriptions.bundle");
+        LANGUAGE_TAG = configurationService.getProperty("dc.language") != null
+                        ? configurationService.getProperty("dc.language")
+                        : configurationService.getProperty("default.language");
     }
+
 
     public String getSeeAlsoAnnotations(Context context, UUID id)
             throws RuntimeException {
@@ -83,7 +96,7 @@ public class AnnotationListService  extends AbstractResourceService {
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
-            AnnotationGenerator annotation = new AnnotationGenerator(IIIF_ENDPOINT + bitstream.getID())
+            AnnotationGenerator annotation = new AnnotationGenerator(IIIF_ENDPOINT + bitstream.getID(), LANGUAGE_TAG)
                 .setMotivation(AnnotationGenerator.LINKING)
                 .setResource(getLinksGenerator(mimetype, bitstream));
             annotationList.addResource(annotation);

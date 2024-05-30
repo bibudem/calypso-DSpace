@@ -16,51 +16,52 @@ import org.dspace.services.ConfigurationService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
-/**
- * This service provides methods for creating a {@code Image Resource} annotation. There should be a single instance of
- * this service per request. The {@code @RequestScope} provides a single instance created and available during
- * complete lifecycle of the HTTP request.
- *
- * @author Michael Spalti  mspalti@willamette.edu
- * @author Andrea Bollini (andrea.bollini at 4science.it)
- */
+
 @RequestScope
 @Component("ImageContentServiceV3")
 public class ImageContentService extends AbstractResourceService {
 
-
+    /**
+    * Constructor that initializes the ImageContentService with the given ConfigurationService.
+    *
+    * @param configurationService the configuration service to use
+    */
     public ImageContentService(ConfigurationService configurationService) {
         setConfiguration(configurationService);
     }
 
     /**
-     * Association of images with their respective canvases is done via annotations. The Open Annotation model
-     * allows any resource to be associated with any other resource, or parts thereof, and it is reused for
-     * both commentary and painting resources on the canvas.
-     * @param uuid bitstream uuid
-     * @param mimetype bitstream mimetype
-     * @param profile the service profile
-     * @param path the path component of the identifier
-     * @return
-     */
+    * Generates an ImageContentGenerator with specified UUID, MIME type, profile, and path.
+    *
+    * @param uuid the unique identifier for the image content
+    * @param mimetype the MIME type of the image content
+    * @param profile the profile generator to use
+    * @param path the path to the image content
+    * @return an ImageContentGenerator configured with the specified parameters
+    */
     protected ImageContentGenerator getImageContent(UUID uuid, String mimetype, ProfileGenerator profile, String path) {
         return new ImageContentGenerator(IMAGE_SERVICE + uuid + path)
                 .setFormat(mimetype)
                 .addService(getImageService(profile, uuid.toString()));
     }
 
+    /**
+    * Generates an ImageContentGenerator with a specified identifier.
+    *
+    * @param identifier the identifier for the image content
+    * @return an ImageContentGenerator configured with the specified identifier
+    */
     protected ImageContentGenerator getImageContent(String identifier) {
         return new ImageContentGenerator(identifier);
     }
 
     /**
-     * A link to a service that makes more functionality available for the resource,
-     * like the Image API service.
-     *
-     * @param profile service profile
-     * @param uuid id of the image bitstream
-     * @return object representing the Image Service
-     */
+    * Generates an ImageServiceGenerator with the specified profile and UUID.
+    *
+    * @param profile the profile generator to use
+    * @param uuid the unique identifier for the image service
+    * @return an ImageServiceGenerator configured with the specified parameters
+    */
     private ImageServiceGenerator getImageService(ProfileGenerator profile, String uuid) {
         return new ImageServiceGenerator(IMAGE_SERVICE + uuid).setProfile(profile);
     }

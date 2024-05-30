@@ -26,7 +26,6 @@ import info.freelibrary.iiif.presentation.v3.Resource;
 import info.freelibrary.iiif.presentation.v3.Manifest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
-import org.dspace.app.iiif.model.ObjectMapperFactory;// il faut adapter a la version 3
 import org.dspace.content.Bitstream;
 import org.dspace.content.BitstreamFormat;
 import org.dspace.content.Bundle;
@@ -35,6 +34,7 @@ import org.dspace.content.Item;
 import org.dspace.content.MetadataValue;
 import org.dspace.content.service.BitstreamService;
 import org.dspace.core.Context;
+import org.dspace.app.iiif.v3.model.ObjectMapperFactory;
 import org.dspace.iiif.IIIFApiQueryService;
 import org.dspace.iiif.util.IIIFSharedUtils;
 import org.dspace.iiif.IIIFApiQueryService;
@@ -43,7 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
-@Component("IIIFUtils iiifv3")
+@Component("IIIFUtilsV3")
 public class IIIFUtils {
 
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(IIIFUtils.class);
@@ -92,21 +92,16 @@ public class IIIFUtils {
         return IIIFSharedUtils.getIIIFBundles(item);
     }
 
-    // get module subclass.
-    protected SimpleModule iiifModule = ObjectMapperFactory.getIiifModule();
-
     /**
      * Serializes the json response.
      * @param resource to be serialized
-     * @return
+     * @return JSON string
      */
     public String asJson(Resource<Manifest> resource) {
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        //mapper.registerModule(iiifModule);  il faut adapter a la version 3
         try {
-           return mapper.writeValueAsString(resource);
+            return mapper.writeValueAsString(resource);
         } catch (JsonProcessingException e) {
-           throw new RuntimeException(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

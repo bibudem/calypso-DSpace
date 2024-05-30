@@ -42,9 +42,6 @@ import org.springframework.web.context.annotation.RequestScope;
  * This service provides methods for creating {@code Canvases}. There should be a single instance of
  * this service per request. The {@code @RequestScope} provides a single instance created and available during
  * complete lifecycle of the HTTP request.
- *
- * @author Michael Spalti  mspalti@willamette.edu
- * @author Andrea Bollini (andrea.bollini at 4science.it)
  */
 @RequestScope
 @Component("CanvasServiceV3")
@@ -220,12 +217,12 @@ public class CanvasService extends AbstractResourceService {
     }
 
     /**
-     * Adds metadata to canvas.
-     * @param context DSpace context
-     * @param bitstream DSpace bitstream
-     * @param canvasGenerator canvas generator
-     * @return canvas generator
-     */
+    * Adds metadata to canvas.
+    * @param context DSpace context
+    * @param bitstream DSpace bitstream
+    * @param canvasGenerator canvas generator
+    * @return canvas generator
+    */
     private CanvasGenerator addMetadata(String langTag, Context context, Bitstream bitstream, CanvasGenerator canvasGenerator) {
             BitstreamService bService = ContentServiceFactory.getInstance().getBitstreamService();
             for (String field : BITSTREAM_METADATA_FIELDS) {
