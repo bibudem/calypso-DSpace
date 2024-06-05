@@ -39,7 +39,7 @@ public abstract class AbstractResourceService {
 
     // Paths for IIIF Image API requests.
     protected static final String THUMBNAIL_PATH = "/full/90,/0/default.jpg";
-    protected static final String IMAGE_PATH =     "/full/full/0/default.jpg";
+    protected static final String IMAGE_PATH =     "/full/max/0/default.jpg";
     // Default canvas dimensions.
     protected static Integer defaultCanvasWidthFallback = 2200;
     protected static Integer defaultCanvasHeightFallback = 1600;
