@@ -19,15 +19,13 @@ import org.dspace.app.iiif.v3.model.generator.CanvasGenerator;
 import info.freelibrary.iiif.presentation.v3.CanvasResource;
 import info.freelibrary.iiif.presentation.v3.Canvas;
 import org.dspace.app.iiif.v3.model.generator.ImageContentGenerator;
-import org.dspace.app.iiif.v3.model.generator.AnnotationGenerator;
-import org.dspace.app.iiif.v3.model.generator.AnnotationListGenerator;
 
 import info.freelibrary.iiif.presentation.v3.ImageContent;
 import info.freelibrary.iiif.presentation.v3.Resource;
 import info.freelibrary.iiif.presentation.v3.properties.Label;
 import info.freelibrary.iiif.presentation.v3.Annotation;
 import info.freelibrary.iiif.presentation.v3.AnnotationPage;
-import info.freelibrary.iiif.presentation.v3.SupplementingAnnotation;
+import info.freelibrary.iiif.presentation.v3.PaintingAnnotation;
 import info.freelibrary.iiif.presentation.v3.AnnotationBody;
 
 import org.dspace.app.iiif.v3.service.utils.BitstreamIIIFVirtualMetadata;
@@ -72,7 +70,7 @@ public class CanvasService extends AbstractResourceService {
     protected String[] BITSTREAM_METADATA_FIELDS;
     protected String DEFAULT_LANGUAGE;
 
-    private AnnotationPage<SupplementingAnnotation> annotationPage;
+    private AnnotationPage<PaintingAnnotation> annotationPage;
 
     /**
      * Used when default dimensions are set to -1 in configuration.
@@ -223,23 +221,24 @@ public class CanvasService extends AbstractResourceService {
 
                  // Create a Canvas resource for the annotation
                  CanvasResource canvasResource = new Canvas(IIIF_ENDPOINT + itemId + "/canvas/c" + count + "/v3");
+                 canvasResource.setWidthHeight(defaultCanvasWidthFallback,defaultCanvasHeightFallback);
 
                  URI annotationUri;
                 try {
-                    annotationUri = new URI(IIIF_ENDPOINT + "annotation/" + bitstreamId + "/v3");
+                    annotationUri = new URI(IIIF_ENDPOINT + bitstreamId + "/annotations/v3");
                 } catch (URISyntaxException e) {
                     log.error("Invalid URI syntax for annotation", e);
                     return null;
                 }
 
                  // Create an Annotation for each AnnotationBody and add it to the list
-                 SupplementingAnnotation supAnnotation = new SupplementingAnnotation(annotationUri,canvasResource);
-                 supAnnotation.setBodies(annotationBody);
+                 PaintingAnnotation paintingAnnotation = new PaintingAnnotation(annotationUri,canvasResource);
+                 paintingAnnotation.setBodies(annotationBody);
 
 
                  // Create an AnnotationPage and add the annotations to it
-                 AnnotationPage<SupplementingAnnotation> annotationPage = new AnnotationPage<>(IIIF_ENDPOINT + bitstreamId + "/annotations/v3");
-                 annotationPage.addAnnotations(supAnnotation);
+                 AnnotationPage<PaintingAnnotation> annotationPage = new AnnotationPage<>(IIIF_ENDPOINT + bitstreamId + "/annotations/v3");
+                 annotationPage.addAnnotations(paintingAnnotation);
 
                  // Add the annotation page to the canvas generator
                  canvasGenerator.addAnnotationPage(annotationPage);

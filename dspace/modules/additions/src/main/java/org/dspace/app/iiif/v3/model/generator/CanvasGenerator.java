@@ -13,7 +13,7 @@ import info.freelibrary.iiif.presentation.v3.Manifest;
 import info.freelibrary.iiif.presentation.v3.properties.Label;
 import info.freelibrary.iiif.presentation.v3.Annotation;
 import info.freelibrary.iiif.presentation.v3.AnnotationPage;
-import info.freelibrary.iiif.presentation.v3.SupplementingAnnotation;
+import info.freelibrary.iiif.presentation.v3.PaintingAnnotation;
 import info.freelibrary.iiif.presentation.v3.AnnotationBody;
 
 import jakarta.validation.constraints.NotNull;
@@ -30,7 +30,7 @@ public class CanvasGenerator implements IIIFV3Resource {
 
     private final String identifier;
     private List<Metadata> metadata = new ArrayList<>();
-    private AnnotationPage<SupplementingAnnotation> annotation;
+    private AnnotationPage<PaintingAnnotation> annotation;
     private Label label;
     private String langTag;
     private Integer height;
@@ -102,7 +102,7 @@ public class CanvasGenerator implements IIIFV3Resource {
      *
      * @return this {@code CanvasGenerator}
      */
-    public CanvasGenerator addAnnotationPage(AnnotationPage<SupplementingAnnotation> annotation) {
+    public CanvasGenerator addAnnotationPage(AnnotationPage<PaintingAnnotation> annotation) {
         this.annotation = annotation;
         return this;
     }
@@ -144,7 +144,7 @@ public class CanvasGenerator implements IIIFV3Resource {
             canvas.setMetadata(metadata);
         }
        if (annotation != null) {
-           canvas.setSupplementingPages(annotation);
+           canvas.setPaintingPages(annotation);
        }
 
 
