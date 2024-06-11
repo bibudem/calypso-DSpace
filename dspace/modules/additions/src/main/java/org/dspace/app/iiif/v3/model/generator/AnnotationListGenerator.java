@@ -51,6 +51,7 @@ public class AnnotationListGenerator implements IIIFV3Resource {
         this.annotations.add((Annotation) annotation.generateResource());
     }
 
+
     @Override
     public Resource<PaintingAnnotation> generateResource() {
         if (identifier == null) {

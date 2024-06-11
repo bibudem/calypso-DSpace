@@ -1,10 +1,3 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.app.iiif.v3.model.generator;
 
 import java.util.ArrayList;
@@ -18,6 +11,11 @@ import info.freelibrary.iiif.presentation.v3.properties.Metadata;
 import info.freelibrary.iiif.presentation.v3.Resource;
 import info.freelibrary.iiif.presentation.v3.Manifest;
 import info.freelibrary.iiif.presentation.v3.properties.Label;
+import info.freelibrary.iiif.presentation.v3.Annotation;
+import info.freelibrary.iiif.presentation.v3.AnnotationPage;
+import info.freelibrary.iiif.presentation.v3.SupplementingAnnotation;
+import info.freelibrary.iiif.presentation.v3.AnnotationBody;
+
 import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
@@ -31,8 +29,8 @@ import org.springframework.web.context.annotation.RequestScope;
 public class CanvasGenerator implements IIIFV3Resource {
 
     private final String identifier;
-    private final List<Metadata> metadata = new ArrayList<>();
-    private final List<ImageContent> images = new ArrayList<>();
+    private List<Metadata> metadata = new ArrayList<>();
+    private AnnotationPage<SupplementingAnnotation> annotation;
     private Label label;
     private String langTag;
     private Integer height;
@@ -86,16 +84,7 @@ public class CanvasGenerator implements IIIFV3Resource {
         return this;
     }
 
-    /**
-     * Adds an image content to the canvas.
-     *
-     * @param image the image content to add
-     * @return this {@code CanvasGenerator}
-     */
-    public CanvasGenerator addImage(ImageContent image) {
-        images.add(image);
-        return this;
-    }
+
 
     /**
      * Adds a thumbnail to the canvas.
@@ -105,6 +94,16 @@ public class CanvasGenerator implements IIIFV3Resource {
      */
     public CanvasGenerator addThumbnail(ImageContent thumbnail) {
         this.thumbnail = thumbnail;
+        return this;
+    }
+
+    /**
+     * Adds an AnnotationPage to the canvas.
+     *
+     * @return this {@code CanvasGenerator}
+     */
+    public CanvasGenerator addAnnotationPage(AnnotationPage<SupplementingAnnotation> annotation) {
+        this.annotation = annotation;
         return this;
     }
 
@@ -134,24 +133,21 @@ public class CanvasGenerator implements IIIFV3Resource {
         } else {
             canvas = new Canvas(identifier);
         }
-        if (thumbnail != null) {
-            if (height == null || width == null) {
-                throw new RuntimeException("The Canvas resource requires both height and width dimensions.");
-            }
+        if (height != null && width != null) {
             canvas.setWidthHeight(width, height);
+        }
 
-            for (ImageContent res : images) {
-                canvas.setThumbnails(res);
-            }
-            if (thumbnail != null) {
-                canvas.setThumbnails(thumbnail);
-            }
+        if (thumbnail != null) {
+            canvas.setThumbnails(thumbnail);
         }
         if (!metadata.isEmpty()) {
-            for (Metadata meta : metadata) {
-                canvas.setMetadata(meta);
-            }
+            canvas.setMetadata(metadata);
         }
+       if (annotation != null) {
+           canvas.setSupplementingPages(annotation);
+       }
+
+
         return canvas;
     }
 }

@@ -16,11 +16,19 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
 import org.dspace.app.iiif.v3.model.generator.CanvasGenerator;
+import info.freelibrary.iiif.presentation.v3.CanvasResource;
+import info.freelibrary.iiif.presentation.v3.Canvas;
 import org.dspace.app.iiif.v3.model.generator.ImageContentGenerator;
+import org.dspace.app.iiif.v3.model.generator.AnnotationGenerator;
+import org.dspace.app.iiif.v3.model.generator.AnnotationListGenerator;
 
 import info.freelibrary.iiif.presentation.v3.ImageContent;
 import info.freelibrary.iiif.presentation.v3.Resource;
 import info.freelibrary.iiif.presentation.v3.properties.Label;
+import info.freelibrary.iiif.presentation.v3.Annotation;
+import info.freelibrary.iiif.presentation.v3.AnnotationPage;
+import info.freelibrary.iiif.presentation.v3.SupplementingAnnotation;
+import info.freelibrary.iiif.presentation.v3.AnnotationBody;
 
 import org.dspace.app.iiif.v3.service.utils.BitstreamIIIFVirtualMetadata;
 import org.dspace.app.iiif.v3.service.utils.IIIFUtils;
@@ -37,6 +45,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * This service provides methods for creating {@code Canvases}. There should be a single instance of
@@ -60,6 +71,8 @@ public class CanvasService extends AbstractResourceService {
 
     protected String[] BITSTREAM_METADATA_FIELDS;
     protected String DEFAULT_LANGUAGE;
+
+    private AnnotationPage<SupplementingAnnotation> annotationPage;
 
     /**
      * Used when default dimensions are set to -1 in configuration.
@@ -179,32 +192,61 @@ public class CanvasService extends AbstractResourceService {
          * @param mimeType  bitstream mimetype
          * @return a canvas generator
          */
-        protected CanvasGenerator getCanvas(Context context, String itemId, Bitstream bitstream, Bundle bundle,
-                Item item, int count, String mimeType) {
-            int pagePosition = count + 1;
+    protected CanvasGenerator getCanvas(Context context, String itemId, Bitstream bitstream, Bundle bundle,
+                        Item item, int count, String mimeType) {
+                int pagePosition = count + 1;
+
+                String canvasNaming = utils.getCanvasNaming(item, I18nUtil.getMessage("iiif.canvas.default-naming"));
+                String valueLabel = utils.getIIIFLabel(bitstream, canvasNaming + " " + pagePosition);
+                Label label = new Label(DEFAULT_LANGUAGE, valueLabel);
+
+                setCanvasDimensions(bitstream);
+
+                int canvasWidth = utils.getCanvasWidth(bitstream, bundle, item, getDefaultWidth());
+                int canvasHeight = utils.getCanvasHeight(bitstream, bundle, item, getDefaultHeight());
+                UUID bitstreamId = bitstream.getID();
+                ImageContentGenerator image = imageContentService.getImageContent(bitstreamId, mimeType,
+                        imageUtil.getImageProfile(), IMAGE_PATH);
+
+                ImageContentGenerator thumb = imageContentService.getImageContent(bitstreamId, mimeType,
+                        thumbUtil.getThumbnailProfile(), THUMBNAIL_PATH);
 
 
-            String canvasNaming = utils.getCanvasNaming(item, I18nUtil.getMessage("iiif.canvas.default-naming"));
-            String valueLabel = utils.getIIIFLabel(bitstream, canvasNaming + " " + pagePosition);
-            Label label = new Label(DEFAULT_LANGUAGE, valueLabel);
+                CanvasGenerator canvasGenerator = addMetadata(DEFAULT_LANGUAGE, context, bitstream,
+                        new CanvasGenerator(IIIF_ENDPOINT + itemId + "/canvas/c" + count + "/v3")
+                                .addThumbnail(thumb.generateResource())
+                                .setWidthHeight(canvasWidth, canvasHeight)
+                                .setLabel(label));
 
-            setCanvasDimensions(bitstream);
+                // Create an image annotation with image information
+                 AnnotationBody<ImageContent> annotationBody = image.generateResource();
 
-            int canvasWidth = utils.getCanvasWidth(bitstream, bundle, item, getDefaultWidth());
-            int canvasHeight = utils.getCanvasHeight(bitstream, bundle, item, getDefaultHeight());
-            UUID bitstreamId = bitstream.getID();
-            ImageContentGenerator image = imageContentService.getImageContent(bitstreamId, mimeType,
-                    imageUtil.getImageProfile(), IMAGE_PATH);
+                 // Create a Canvas resource for the annotation
+                 CanvasResource canvasResource = new Canvas(IIIF_ENDPOINT + itemId + "/canvas/c" + count + "/v3");
 
-            ImageContentGenerator thumb = imageContentService.getImageContent(bitstreamId, mimeType,
-                    thumbUtil.getThumbnailProfile(), THUMBNAIL_PATH);
+                 URI annotationUri;
+                try {
+                    annotationUri = new URI(IIIF_ENDPOINT + "annotation/" + bitstreamId + "/v3");
+                } catch (URISyntaxException e) {
+                    log.error("Invalid URI syntax for annotation", e);
+                    return null;
+                }
 
-            return addMetadata(DEFAULT_LANGUAGE, context, bitstream,
-                    new CanvasGenerator(IIIF_ENDPOINT + itemId + "/canvas/c" + count+ "/v3")
-                        .addImage(image.generateResource()).addThumbnail(thumb.generateResource()).setWidthHeight(canvasWidth, canvasHeight)
-                        .addThumbnail(thumb.generateResource())
-                        .setWidthHeight(canvasWidth, canvasHeight).setLabel(label));
-        }
+                 // Create an Annotation for each AnnotationBody and add it to the list
+                 SupplementingAnnotation supAnnotation = new SupplementingAnnotation(annotationUri,canvasResource);
+                 supAnnotation.setBodies(annotationBody);
+
+
+                 // Create an AnnotationPage and add the annotations to it
+                 AnnotationPage<SupplementingAnnotation> annotationPage = new AnnotationPage<>(IIIF_ENDPOINT + bitstreamId + "/annotations/v3");
+                 annotationPage.addAnnotations(supAnnotation);
+
+                 // Add the annotation page to the canvas generator
+                 canvasGenerator.addAnnotationPage(annotationPage);
+
+                return canvasGenerator;
+
+            }
 
     /**
      * Ranges expect the Canvas object to have only an identifier.
@@ -269,6 +311,5 @@ public class CanvasService extends AbstractResourceService {
             }
             return canvasGenerator;
         }
-
 
 }
