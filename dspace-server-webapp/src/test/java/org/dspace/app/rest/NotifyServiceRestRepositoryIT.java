@@ -65,6 +65,9 @@ public class NotifyServiceRestRepositoryIT extends AbstractControllerIntegration
     @Autowired
     private NotifyService notifyService;
 
+    @Autowired
+    private ObjectMapper mapper;
+
     @Test
     public void findAllUnAuthorizedTest() throws Exception {
         getClient().perform(get("/api/ldn/ldnservices"))
@@ -147,7 +150,6 @@ public class NotifyServiceRestRepositoryIT extends AbstractControllerIntegration
 
     @Test
     public void createForbiddenTest() throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
         NotifyServiceRest notifyServiceRest = new NotifyServiceRest();
         String authToken = getAuthToken(eperson.getEmail(), password);
         getClient(authToken).perform(post("/api/ldn/ldnservices")
@@ -158,8 +160,6 @@ public class NotifyServiceRestRepositoryIT extends AbstractControllerIntegration
 
     @Test
     public void createTestScoreFail() throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-
         NotifyServiceInboundPatternRest inboundPatternRestOne = new NotifyServiceInboundPatternRest();
         inboundPatternRestOne.setPattern("patternA");
         inboundPatternRestOne.setConstraint("itemFilterA");
@@ -188,8 +188,6 @@ public class NotifyServiceRestRepositoryIT extends AbstractControllerIntegration
 
     @Test
     public void createTest() throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-
         NotifyServiceInboundPatternRest inboundPatternRestOne = new NotifyServiceInboundPatternRest();
         inboundPatternRestOne.setPattern("patternA");
         inboundPatternRestOne.setConstraint("itemFilterA");
@@ -2066,6 +2064,7 @@ public class NotifyServiceRestRepositoryIT extends AbstractControllerIntegration
             NotifyServiceBuilder.createNotifyServiceBuilder(context, "service name one")
                                 .withDescription("service description one")
                                 .withUrl("https://service.ldn.org/about")
+                                .withStatus(true)
                                 .withLdnUrl("https://service.ldn.org/inbox")
                                 .build();
 
@@ -2073,6 +2072,7 @@ public class NotifyServiceRestRepositoryIT extends AbstractControllerIntegration
             NotifyServiceBuilder.createNotifyServiceBuilder(context, "service name two")
                                 .withDescription("service description two")
                                 .withUrl("https://service2.ldn.org/about")
+                                .withStatus(true)
                                 .withLdnUrl("https://service2.ldn.org/inbox")
                                 .build();
 
@@ -2080,6 +2080,7 @@ public class NotifyServiceRestRepositoryIT extends AbstractControllerIntegration
             NotifyServiceBuilder.createNotifyServiceBuilder(context, "service name three")
                                 .withDescription("service description")
                                 .withUrl("https://service3.ldn.org/about")
+                                .withStatus(true)
                                 .withLdnUrl("https://service3.ldn.org/inbox")
                                 .build();
 

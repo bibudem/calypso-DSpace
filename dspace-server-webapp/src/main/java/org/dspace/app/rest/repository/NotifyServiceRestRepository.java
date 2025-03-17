@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletInputStream;
@@ -56,6 +57,9 @@ public class NotifyServiceRestRepository extends DSpaceRestRepository<NotifyServ
     @Autowired
     ResourcePatch<NotifyServiceEntity> resourcePatch;
 
+    @Autowired
+    private ObjectMapper mapper;
+
     @Override
     @PreAuthorize("hasAuthority('AUTHENTICATED')")
     public NotifyServiceRest findOne(Context context, Integer id) {
@@ -84,7 +88,6 @@ public class NotifyServiceRestRepository extends DSpaceRestRepository<NotifyServ
     @PreAuthorize("hasAuthority('ADMIN')")
     protected NotifyServiceRest createAndReturn(Context context) throws AuthorizeException, SQLException {
         HttpServletRequest req = getRequestService().getCurrentRequest().getHttpServletRequest();
-        ObjectMapper mapper = new ObjectMapper();
         NotifyServiceRest notifyServiceRest;
         try {
             ServletInputStream input = req.getInputStream();
@@ -192,7 +195,10 @@ public class NotifyServiceRestRepository extends DSpaceRestRepository<NotifyServ
         Pageable pageable) {
         try {
             List<NotifyServiceEntity> notifyServiceEntities =
-                notifyService.findManualServicesByInboundPattern(obtainContext(), pattern);
+                notifyService.findManualServicesByInboundPattern(obtainContext(), pattern)
+                .stream()
+                .filter(NotifyServiceEntity::isEnabled)
+                .collect(Collectors.toList());
 
             return converter.toRestPage(notifyServiceEntities, pageable, utils.obtainProjection());
         } catch (SQLException e) {

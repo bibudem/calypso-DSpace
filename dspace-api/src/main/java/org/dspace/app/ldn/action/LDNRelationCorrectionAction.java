@@ -9,7 +9,8 @@ package org.dspace.app.ldn.action;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.util.Date;
+import java.time.Instant;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
@@ -57,7 +58,12 @@ public class LDNRelationCorrectionAction implements LDNAction {
         QAEvent qaEvent = null;
         if (notification.getObject() != null) {
             NotifyMessageDTO message = new NotifyMessageDTO();
-            message.setHref(notification.getObject().getAsSubject());
+            if (notification.getType().containsAll(Set.of("Announce",
+                "coar-notify:RelationshipAction"))) {
+                message.setHref(notification.getObject().getAsSubject());
+            } else {
+                message.setHref(notification.getObject().getAsObject());
+            }
             message.setRelationship(notification.getObject().getAsRelationship());
             if (notification.getOrigin() != null) {
                 message.setServiceId(notification.getOrigin().getId());
@@ -69,8 +75,7 @@ public class LDNRelationCorrectionAction implements LDNAction {
             qaEvent = new QAEvent(QAEvent.COAR_NOTIFY_SOURCE,
                 handleService.findHandle(context, item), item.getID().toString(), itemName,
                 this.getQaEventTopic(), doubleScoreValue,
-                mapper.writeValueAsString(message),
-                new Date());
+                mapper.writeValueAsString(message), Instant.now());
             qaEventService.store(context, qaEvent);
             result = LDNActionStatus.CONTINUE;
         }

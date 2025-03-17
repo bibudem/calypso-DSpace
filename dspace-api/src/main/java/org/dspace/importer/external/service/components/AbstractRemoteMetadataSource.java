@@ -8,6 +8,7 @@
 
 package org.dspace.importer.external.service.components;
 
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,7 +159,7 @@ public abstract class AbstractRemoteMetadataSource {
             try {
                 lock.lock();
                 this.error = null;
-                long time = System.currentTimeMillis() - lastRequest;
+                long time = Instant.now().toEpochMilli() - lastRequest;
                 if ((time) < interRequestTime) {
                     Thread.sleep(interRequestTime - time);
                 }
@@ -167,9 +168,9 @@ public abstract class AbstractRemoteMetadataSource {
                 } catch (Exception e) {
                     throwSourceException(retry, e, operationId);
                 }
-                log.info("operation " + operationId + " started");
+                log.debug("Operation {} started. Calling {}", operationId, callable.getClass().getName());
                 T response = callable.call();
-                log.info("operation " + operationId + " successful");
+                log.debug("Operation {} successful", operationId);
                 return response;
             } catch (Exception e) {
                 this.error = e;
@@ -180,10 +181,11 @@ public abstract class AbstractRemoteMetadataSource {
 
                 // No MetadataSourceException has interrupted the loop
                 retry++;
-                log.warn("Error in trying operation " + operationId + " " + retry + " " + warning + ", retrying !", e);
+                log.warn("Error in calling {} in operation {} {} {}, retrying!", callable.getClass().getName(),
+                         operationId, retry, warning, e);
 
             } finally {
-                this.lastRequest = System.currentTimeMillis();
+                this.lastRequest = Instant.now().toEpochMilli();
                 lock.unlock();
             }
 

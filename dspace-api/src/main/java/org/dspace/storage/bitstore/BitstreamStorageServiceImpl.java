@@ -10,6 +10,7 @@ package org.dspace.storage.bitstore;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -148,7 +149,7 @@ public class BitstreamStorageServiceImpl implements BitstreamStorageService, Ini
      * @param assetstore    The assetstore number for the bitstream to be
      *                      registered
      * @param bitstreamPath The relative path of the bitstream to be registered.
-     *                      The path is relative to the path of ths assetstore.
+     *                      The path is relative to the path of this assetstore.
      * @return The ID of the registered bitstream
      * @throws SQLException If a problem occurs accessing the RDBMS
      * @throws IOException  if IO error
@@ -224,7 +225,7 @@ public class BitstreamStorageServiceImpl implements BitstreamStorageService, Ini
         int cleanedBitstreamCount = 0;
 
         int deletedBitstreamCount = bitstreamService.countDeletedBitstreams(context);
-        System.out.println("Found " + deletedBitstreamCount + " deleted bistream to cleanup");
+        System.out.println("Found " + deletedBitstreamCount + " deleted bitstream to cleanup");
 
         try {
             context.turnOffAuthorisationSystem();
@@ -478,7 +479,7 @@ public class BitstreamStorageServiceImpl implements BitstreamStorageService, Ini
      * @return True if this file is too recent to be deleted
      */
     protected boolean isRecent(Long lastModified) {
-        long now = new java.util.Date().getTime();
+        long now = Instant.now().toEpochMilli();
 
         if (lastModified >= now) {
             return true;
