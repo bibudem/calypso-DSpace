@@ -331,7 +331,7 @@
             <artifactId>spring-boot-starter-aop</artifactId>
             <version>${spring-boot.version}</version>
         </dependency>
-        
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -508,6 +508,10 @@
         <dependency>
             <groupId>org.dspace</groupId>
             <artifactId>dspace-oai</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.dspace</groupId>
+            <artifactId>dspace-saml2</artifactId>
         </dependency>
         <dependency>
             <groupId>org.dspace</groupId>
