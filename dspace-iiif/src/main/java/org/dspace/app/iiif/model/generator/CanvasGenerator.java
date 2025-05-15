@@ -12,6 +12,8 @@ import java.util.List;
 
 import de.digitalcollections.iiif.model.ImageContent;
 import de.digitalcollections.iiif.model.MetadataEntry;
+import de.digitalcollections.iiif.model.OtherContent;
+import de.digitalcollections.iiif.model.sharedcanvas.AnnotationList;
 import de.digitalcollections.iiif.model.sharedcanvas.Canvas;
 import de.digitalcollections.iiif.model.sharedcanvas.Resource;
 import jakarta.validation.constraints.NotNull;
@@ -31,6 +33,8 @@ public class CanvasGenerator implements IIIFResource {
     private Integer height;
     private Integer width;
     private ImageContent thumbnail;
+    private List<ExternalLinksGenerator> seeAlso = null;
+    private List<AnnotationList> otherContent = new ArrayList<AnnotationList>();
 
     /**
      * Constructor
@@ -93,6 +97,26 @@ public class CanvasGenerator implements IIIFResource {
     }
 
     /**
+     * Adds a list of seeAlso links to the canvas.
+     * @param links The list of seeAlso links
+     * @return
+     */
+    public CanvasGenerator addSeeAlso(List<ExternalLinksGenerator> links) {
+        this.seeAlso = links;
+        return this;
+    }
+
+    /**
+     * Adds a link to transcriptions to the canvas.
+     * @param oc The othercontent link
+     * @return The object
+     */
+    public CanvasGenerator addTranscriptions(AnnotationList oc) {
+        if (oc != null) this.otherContent.add(oc);
+        return this;
+    }
+
+    /**
      * Adds single metadata field to Manifest.
      * @param field property field
      * @param value property value
@@ -138,6 +162,16 @@ public class CanvasGenerator implements IIIFResource {
         if (metadata.size() > 0) {
             for (MetadataEntry meta : metadata) {
                 canvas.addMetadata(meta);
+            }
+        }
+        if (seeAlso != null && seeAlso.size() > 0) {
+            for (ExternalLinksGenerator link: seeAlso) {
+                canvas.addSeeAlso((OtherContent)link.generateResource());
+            }
+        }
+        if (otherContent != null && otherContent.size() > 0) {
+            for (AnnotationList oc: otherContent) {
+                canvas.addOtherContent(oc);
             }
         }
         return canvas;
