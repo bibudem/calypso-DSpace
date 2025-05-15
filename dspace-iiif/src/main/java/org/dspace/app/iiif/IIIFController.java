@@ -9,6 +9,7 @@ package org.dspace.app.iiif;
 
 import java.util.UUID;
 
+import org.dspace.app.iiif.service.utils.IIIFUtils;
 import org.dspace.core.Context;
 import org.dspace.web.ContextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,5 +111,20 @@ public class IIIFController {
     public String findCanvas(@PathVariable UUID id, @PathVariable String cid) {
         Context context = ContextUtil.obtainCurrentRequestContext();
         return iiifFacade.getCanvas(context, id, cid);
+    }
+
+    /**
+     * Any bitstream may have transcriptions attached to it. This URL will return an
+     * annotationList for the bitstream, built with the files withing a specific bundle.
+     * 
+     * @param iId    The item UUID
+     * @param bId    The bitstream UUID
+     * @param cId    The canvas ID
+     * @return      An annotationList in JSON format. The list may be empty.
+     */
+    @RequestMapping(method = RequestMethod.GET, value = "/{iId}/{bId}/{cId}/transcriptions", produces = "application/json")
+    public String findTranscriptions(@PathVariable UUID iId, @PathVariable UUID bId, @PathVariable String cId) {
+        Context context = ContextUtil.obtainCurrentRequestContext();
+        return iiifFacade.getTranscriptions(context, iId, bId, cId, iId + "/" + bId + "/" + cId + "/transcriptions");
     }
 }
