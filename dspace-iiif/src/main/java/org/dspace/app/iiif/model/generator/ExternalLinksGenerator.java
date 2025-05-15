@@ -94,6 +94,3 @@ public class ExternalLinksGenerator implements IIIFResource {
         return otherContent;
     }
 }
-    }
-
-}
