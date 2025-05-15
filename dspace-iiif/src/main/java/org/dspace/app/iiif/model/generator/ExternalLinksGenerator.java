@@ -25,7 +25,7 @@ public class ExternalLinksGenerator implements IIIFResource {
     private String format;
     private String label;
     private String type;
-    private String profile; // Add profile field
+    private URI profile; // Changed from String to URI
 
     public ExternalLinksGenerator(@NotNull String identifier) {
         if (identifier.isEmpty()) {
@@ -66,7 +66,7 @@ public class ExternalLinksGenerator implements IIIFResource {
      * @param profile the profile URI
      */
     public ExternalLinksGenerator setProfile(URI profile) {
-        this.profile = profile != null ? profile.toString() : null;
+        this.profile = profile;
         return this;
     }
 
@@ -88,7 +88,7 @@ public class ExternalLinksGenerator implements IIIFResource {
             otherContent.setType(type);
         }
         if (profile != null) {
-            otherContent.setProfile(profile); // Set profile on OtherContent
+            otherContent.setProfile(profile); // Now compatible with URI
         }
 
         return otherContent;
