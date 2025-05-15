@@ -457,4 +457,18 @@ public class IIIFUtils {
                 .findFirst().map(m -> m.getValue()).orElse(defaultNaming);
     }
 
+     /**
+     * Check a String (filename) and returns the portion before the last occurrence of "."
+     * @param name  The String to check
+     * @return  The portion before ".", or the string itself if not found
+     */
+    public static String getRootName(String name) {
+        String root = name;
+        int dotPos = root.lastIndexOf(".");
+        if (dotPos > 0) {
+            root = name.substring(0, dotPos);
+        }
+        return root;
+    }
+
 }
