@@ -40,10 +40,10 @@ nb-configuration.xml
 /local.cfg
 # UdeMChange: we ignore local.local.cfg, but we put local.cfg in the repo
 /dspace/config/local.local.cfg
-
+/dspace/log
 ##Mac noise
 .DS_Store
-
+usr/share/GeoIP/
 ##Ignore JRebel project configuration
 rebel.xml
 

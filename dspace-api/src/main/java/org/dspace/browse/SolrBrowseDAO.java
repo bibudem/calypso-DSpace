@@ -7,6 +7,9 @@
  */
 package org.dspace.browse;
 
+import static org.dspace.discovery.SearchUtils.RESOURCE_ID_FIELD;
+import static org.dspace.discovery.SearchUtils.RESOURCE_TYPE_FIELD;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -308,8 +311,10 @@ public class SolrBrowseDAO implements BrowseDAO {
     public String doMaxQuery(String column, String table, int itemID)
         throws BrowseException {
         DiscoverQuery query = new DiscoverQuery();
-        query.setQuery("search.resourceid:" + itemID
-                           + " AND search.resourcetype:" + IndexableItem.TYPE);
+        query.setQuery("*:*");
+        query.addFilterQueries(
+                RESOURCE_ID_FIELD + ":" + itemID,
+                RESOURCE_TYPE_FIELD + ":" + IndexableItem.TYPE);
         query.setMaxResults(1);
         DiscoverResult resp = null;
         try {
@@ -345,9 +350,9 @@ public class SolrBrowseDAO implements BrowseDAO {
         }
 
         if (isAscending) {
-            query.setQuery("bi_" + column + "_sort" + ": [* TO \"" + value + "\"}");
+            query.setQuery("bi_" + column + "_sort" + ":[* TO \"" + value + "\"}");
         } else {
-            query.setQuery("bi_" + column + "_sort" + ": {\"" + value + "\" TO *]");
+            query.setQuery("bi_" + column + "_sort" + ":{\"" + value + "\" TO *]");
             query.addFilterQueries("-(bi_" + column + "_sort" + ":" + value + "*)");
         }
         DiscoverResult resp = null;
