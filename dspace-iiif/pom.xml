@@ -15,7 +15,7 @@
     <parent>
         <groupId>org.dspace</groupId>
         <artifactId>dspace-parent</artifactId>
-        <version>9.0-SNAPSHOT</version>
+        <version>10.0-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -141,18 +141,17 @@
         </dependency>
 
         <!-- iiif models v3. -->
-        <dependency>
+        <!-- <dependency>
             <groupId>info.freelibrary</groupId>
             <artifactId>jiiify-presentation-v3</artifactId>
             <version>0.12.4</version>
             <exclusions>
-                <!-- Exclure la dépendance jackson-datatype-jdk8 car donne des erreurs de dépendences -->
                 <exclusion>
                     <groupId>com.fasterxml.jackson.datatype</groupId>
                     <artifactId>jackson-datatype-jdk8</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
+        </dependency>-->
 
         <!-- Internal -->
         <dependency>

@@ -46,7 +46,8 @@ nb-configuration.xml
 
 ##Ignore JRebel project configuration
 rebel.xml
-
+usr/
+dspace/log/
 
 ## Ignore jenv configuration
 .java-version
