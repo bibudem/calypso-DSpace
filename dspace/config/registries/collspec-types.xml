@@ -15,7 +15,7 @@
 
   <dc-schema>
     <name>collspec</name>
-    <namespace>http://calypso.bib.umontreal.ca/</namespace>
+    <namespace>http://collspec.bib.umontreal.ca/</namespace>
   </dc-schema>
 
   <dc-type>
