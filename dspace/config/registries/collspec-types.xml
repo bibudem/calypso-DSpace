@@ -1,25 +1,25 @@
 <?xml version="1.0"?>
 <!--
-  - calypso-types.xml
+  - collspec-types.xml
   -
-  - Des métdonnées locales pour Calypso.
+  - Des métdonnées locales pour Collection spéciale.
   - 
   -->
 <dspace-dc-types>
 
   <dspace-header>
-    <title>Registre des métadonnées spécifiques à Calypso</title>
+    <title>Registre des métadonnées spécifiques à Collection spéciale</title>
     <description>Ces métadonnées sont utilisées dans les cas où il n'y a pas d'équivalent Dublin Core.
     </description>
   </dspace-header>
 
   <dc-schema>
-    <name>calypso</name>
+    <name>collspec</name>
     <namespace>http://calypso.bib.umontreal.ca/</namespace>
   </dc-schema>
 
   <dc-type>
-    <schema>calypso</schema>
+    <schema>collspec</schema>
     <element>contentdmurl</element>
     <qualifier></qualifier>
     <scope_note>
@@ -28,7 +28,7 @@
   </dc-type>
 
   <dc-type>
-    <schema>calypso</schema>
+    <schema>collspec</schema>
     <element>vedette</element>
     <qualifier></qualifier>
     <scope_note>
@@ -37,7 +37,7 @@
   </dc-type>
 
   <dc-type>
-    <schema>calypso</schema>
+    <schema>collspec</schema>
     <element>vedettecoll</element>
     <qualifier></qualifier>
     <scope_note>
