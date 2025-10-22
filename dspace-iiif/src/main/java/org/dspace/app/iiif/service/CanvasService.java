@@ -16,6 +16,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
 import org.dspace.app.iiif.model.generator.CanvasGenerator;
+import org.dspace.app.iiif.model.generator.ExternalLinksGenerator;
 import org.dspace.app.iiif.model.generator.ImageContentGenerator;
 import org.dspace.app.iiif.service.utils.BitstreamIIIFVirtualMetadata;
 import org.dspace.app.iiif.service.utils.IIIFUtils;
@@ -33,6 +34,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
+import de.digitalcollections.iiif.model.sharedcanvas.AnnotationList;
+
 /**
  * This service provides methods for creating {@code Canvases}. There should be a single instance of
  * this service per request. The {@code @RequestScope} provides a single instance created and available during
@@ -49,6 +52,12 @@ public class CanvasService extends AbstractResourceService {
 
     @Autowired
     ImageContentService imageContentService;
+
+    @Autowired
+    CanvasSeeAlsoService canvasSeeAlsoService;
+
+    @Autowired
+    CanvasTranscriptionsService canvasTranscriptionsService;
 
     @Autowired
     IIIFUtils utils;
@@ -194,10 +203,13 @@ public class CanvasService extends AbstractResourceService {
         ImageContentGenerator thumb = imageContentService.getImageContent(bitstreamId, mimeType,
                 thumbUtil.getThumbnailProfile(), THUMBNAIL_PATH);
 
+        List<ExternalLinksGenerator> canvasSeeAlso = canvasSeeAlsoService.getCanvasSeeAlso(context, item, bitstream);
+        AnnotationList canvasTranscriptions = canvasTranscriptionsService.getCanvasTranscriptions(context, item, bitstream, IIIF_ENDPOINT + manifestId + "/" + bitstreamId + "/c" + count + "/transcriptions");
+
         return addMetadata(context, bitstream,
                 new CanvasGenerator(IIIF_ENDPOINT + manifestId + "/canvas/c" + count)
                     .addImage(image.generateResource()).addThumbnail(thumb.generateResource()).setHeight(canvasHeight)
-                    .setWidth(canvasWidth).setLabel(label));
+                    .setWidth(canvasWidth).setLabel(label).addSeeAlso(canvasSeeAlso)).addTranscriptions(canvasTranscriptions);
     }
 
     /**

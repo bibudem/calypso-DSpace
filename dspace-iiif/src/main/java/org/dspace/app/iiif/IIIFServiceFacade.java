@@ -133,4 +133,19 @@ public class IIIFServiceFacade {
         return annotationListService.getSeeAlsoAnnotations(context, id);
     }
 
+    /**
+     * Returns annotations for transcriptions of the bitstream.
+     *
+     * @param context           The DSpace context
+     * @param iId               The Item uuid
+     * @param bId               The Bitstream uuid
+     * @param cId               The Canvas id
+     * @param annotationListId  The ID of the annotation list itself (the part after the base IIIF service URL)
+     * @return AnnotationList as JSON
+     */
+    @PreAuthorize("hasPermission(#bId, 'BITSTREAM', 'READ')")
+    public String getTranscriptions(Context context, UUID iId, UUID bId, String cId, String annotationListId) {
+        return annotationListService.getTranscriptionsAnnotations(context, iId, bId, cId, annotationListId);
+    }
+
 }
