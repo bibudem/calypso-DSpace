@@ -38,6 +38,7 @@ import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.services.s3.transfer.Upload;
+import com.amazonaws.services.s3.model.S3Object;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -667,7 +668,7 @@ public class S3BitStoreService extends BaseBitStoreService {
          * @throws IOException
          * @throws FileNotFoundException
          */
-        private void downloadChunk() throws IOException, FileNotFoundException {
+        /*private void downloadChunk() throws IOException, FileNotFoundException {
             // Create a DownloadFileRequest with the desired byte range
             long startByte = currPos; // Start byte (inclusive)
             long endByte = Long.min(startByte + chunkMaxSize - 1, fileSize - 1); // End byte (inclusive)
@@ -684,6 +685,36 @@ public class S3BitStoreService extends BaseBitStoreService {
             } catch (AmazonClientException | InterruptedException e) {
                 currentChunkFile.delete();
                 throw new IOException(e);
+            }
+        }*/
+       private void downloadChunk() throws IOException, FileNotFoundException {
+            // Calculer le range du chunk à télécharger
+            long startByte = currPos; // Start byte (inclusive)
+            long endByte = Long.min(startByte + chunkMaxSize - 1, fileSize - 1); // End byte (inclusive)
+            
+            try {
+                // Créer une requête GetObject avec Range
+                GetObjectRequest getRequest = new GetObjectRequest(bucketName, objectKey)
+                        .withRange(startByte, endByte);
+                
+                // MODIFICATION: Utiliser s3Service.getObject() directement
+                // au lieu de tm.download() avec fichier temporaire
+                com.amazonaws.services.s3.model.S3Object s3Object = s3Service.getObject(getRequest);
+                
+                // Obtenir le stream directement depuis S3
+                currentChunkStream = s3Object.getObjectContent();
+                
+                // Mettre à jour la position de fin du chunk
+                endOfChunk = endByte + 1;
+                
+                if (log.isDebugEnabled()) {
+                    log.debug("Downloaded S3 chunk: bytes {}-{}/{} for object {}", 
+                        startByte, endByte, fileSize, objectKey);
+                }
+                
+            } catch (AmazonClientException e) {
+                log.error("Failed to download chunk from S3: {}", objectKey, e);
+                throw new IOException("Failed to download chunk from S3: " + objectKey, e);
             }
         }
 
