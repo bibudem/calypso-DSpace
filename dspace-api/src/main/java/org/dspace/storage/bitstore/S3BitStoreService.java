@@ -698,8 +698,7 @@ public class S3BitStoreService extends BaseBitStoreService {
                         .withRange(startByte, endByte);
                 
                 // MODIFICATION: Utiliser s3Service.getObject() directement
-                // au lieu de tm.download() avec fichier temporaire
-                com.amazonaws.services.s3.model.S3Object s3Object = s3Service.getObject(getRequest);
+                S3Object s3Object = s3Service.getObject(getRequest);
                 
                 // Obtenir le stream directement depuis S3
                 currentChunkStream = s3Object.getObjectContent();
