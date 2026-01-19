@@ -12,6 +12,9 @@ import java.util.List;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+/* BibUdeM add: import pour les erreurs de Spring*/
+import org.springframework.context.annotation.Lazy;
+/* fin*/
 import org.springframework.core.GenericTypeResolver;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
@@ -46,7 +49,9 @@ public class WebSecurityExpressionEvaluator {
      * Constructor for this class that sets all the {@link SecurityExpressionHandler} objects in a list
      * @param securityExpressionHandlers    The {@link SecurityExpressionHandler} for this class
      */
-    public WebSecurityExpressionEvaluator(List<SecurityExpressionHandler> securityExpressionHandlers) {
+     /* BibUdeM add: modifications apportées pour dépanner les erreurs au démarrage de Spring.
+    public WebSecurityExpressionEvaluator(List<SecurityExpressionHandler> securityExpressionHandlers) {*/
+    public WebSecurityExpressionEvaluator(@Lazy List<SecurityExpressionHandler> securityExpressionHandlers) {
         this.securityExpressionHandlers = securityExpressionHandlers;
     }
 

@@ -7,26 +7,35 @@
  */
 package org.dspace.app.iiif.service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 
 import org.dspace.app.iiif.model.generator.AnnotationGenerator;
 import org.dspace.app.iiif.model.generator.AnnotationListGenerator;
+import org.dspace.app.iiif.model.generator.CanvasGenerator;
+import org.dspace.app.iiif.model.generator.ContentAsTextGenerator;
 import org.dspace.app.iiif.model.generator.ExternalLinksGenerator;
 import org.dspace.app.iiif.service.utils.IIIFUtils;
+import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.Bitstream;
 import org.dspace.content.BitstreamFormat;
+import org.dspace.content.Bundle;
 import org.dspace.content.Item;
 import org.dspace.content.service.BitstreamFormatService;
 import org.dspace.content.service.BitstreamService;
 import org.dspace.content.service.ItemService;
 import org.dspace.core.Context;
+import org.dspace.core.Utils;
 import org.dspace.services.ConfigurationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
+import de.digitalcollections.iiif.model.MimeType;
+import de.digitalcollections.iiif.model.openannotation.ContentAsText;
 /**
  * This service provides methods for creating an {@code Annotation List}. There should be a single instance of
  * this service per request. The {@code @RequestScope} provides a single instance created and available during
@@ -55,9 +64,11 @@ public class AnnotationListService extends AbstractResourceService {
     @Autowired
     AnnotationListGenerator annotationList;
 
+    private String TRANSCRIPTIONS_BUNDLE_NAME = null;
 
     public AnnotationListService(ConfigurationService configurationService) {
         setConfiguration(configurationService);
+        TRANSCRIPTIONS_BUNDLE_NAME = configurationService.getProperty("iiif.transcriptions.bundle");
     }
 
     /**
@@ -105,6 +116,68 @@ public class AnnotationListService extends AbstractResourceService {
         return utils.asJson(annotationList.generateResource());
     }
 
+    /**
+     * Find transcriptions for the bitstream and return an annotationList with the content
+     * of these transcriptions.
+     * 
+     * @param context           The DSpace context
+     * @param iId               The Item UUID
+     * @param bId               The Bitstream UUID
+     * @param cId               The canvas ID
+     * @param annotationListId  The ID of the annotation list itself (the part after the base IIIF service URL)
+     * @return
+     */
+    public String getTranscriptionsAnnotations(Context context, UUID iId, UUID bId, String cId, String annotationListId) {
+
+        // Set the ID for the annotationList
+        annotationList.setIdentifier(IIIF_ENDPOINT + annotationListId);
+
+        // First get the DSpace object
+        try {
+            Bitstream bts = bitstreamService.find(context, bId);
+            if (bts != null) {
+                // Get the item (assume first bundle and first item)
+                List<Bundle> bundles = bts.getBundles();
+                if (bundles.size() > 0) {
+                    Bundle bdl = bundles.get(0);
+                    List<Item> items = bdl.getItems();
+                    if (items.size() >0) {
+                        // We have the item, try to find the required bundle
+                        Item item = items.get(0);
+                        List<Bundle> itemBundles = item.getBundles();
+                        for (Bundle itemBundle: itemBundles) {
+                            if (itemBundle.getName().equals(TRANSCRIPTIONS_BUNDLE_NAME)) {
+                                // We have the required bundle, let's look at the bitstreams
+                                String rootName = IIIFUtils.getRootName(bts.getName());
+                                String canvasId = IIIF_ENDPOINT + iId + "/canvas/" + cId;
+                                List<Bitstream> tBitstreams = itemBundle.getBitstreams();
+                                for ( Bitstream tBitstream: tBitstreams ) {
+                                    // The name must begin with the name of the bitstream
+                                    if (IIIFUtils.getRootName(tBitstream.getName()).startsWith(rootName)) {
+                                        // The format must be HTML or plain text or JSON
+                                        BitstreamFormat format = tBitstream.getFormat(context);
+                                        if ( format.getMIMEType().equals("text/plain") || format.getMIMEType().equals("text/html") ) {
+                                            AnnotationGenerator annotation = new AnnotationGenerator(IIIF_ENDPOINT + tBitstream.getID())
+                                            .setMotivation(AnnotationGenerator.PAINTING)
+                                            .setOnCanvas(new CanvasGenerator(canvasId))
+                                            .setResource(getContentGenerator(context, tBitstream, format.getMIMEType()));
+                                            annotationList.addResource(annotation);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            // If there is an exception, simply return en empty annotationList.
+        }
+
+        // We will return the annotationList in JSON
+        return utils.asJson(annotationList.generateResource());
+    }
+
     private ExternalLinksGenerator getLinksGenerator(String mimetype, Bitstream bitstream) {
         String identifier = BITSTREAM_PATH_PREFIX
                 + "/"
@@ -114,5 +187,19 @@ public class AnnotationListService extends AbstractResourceService {
         return new ExternalLinksGenerator(identifier)
                 .setFormat(mimetype)
                 .setLabel(bitstream.getName());
+    }
+
+    private ContentAsTextGenerator getContentGenerator(Context context, Bitstream bts, String mimetype) {
+        ContentAsTextGenerator generator = new ContentAsTextGenerator();
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            Utils.copy(bitstreamService.retrieve(context, bts), bos);
+            generator.setText(bos.toString());
+            generator.setFormat(mimetype);
+        }
+        catch (IOException | SQLException | AuthorizeException e) {
+            // Logging?
+        }
+        return generator;
     }
 }

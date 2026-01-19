@@ -11,6 +11,7 @@ import de.digitalcollections.iiif.model.OtherContent;
 import de.digitalcollections.iiif.model.PropertyValue;
 import de.digitalcollections.iiif.model.sharedcanvas.Resource;
 import jakarta.validation.constraints.NotNull;
+import java.net.URI;
 
 /**
  * This generator wraps the other content domain model.
@@ -24,6 +25,7 @@ public class ExternalLinksGenerator implements IIIFResource {
     private String format;
     private String label;
     private String type;
+    private URI profile; // Changed from String to URI
 
     public ExternalLinksGenerator(@NotNull String identifier) {
         if (identifier.isEmpty()) {
@@ -59,6 +61,15 @@ public class ExternalLinksGenerator implements IIIFResource {
         return this;
     }
 
+    /**
+     * Sets the optional profile.
+     * @param profile the profile URI
+     */
+    public ExternalLinksGenerator setProfile(URI profile) {
+        this.profile = profile;
+        return this;
+    }
+
     @Override
     public Resource<OtherContent> generateResource() {
         if (identifier == null) {
@@ -76,8 +87,10 @@ public class ExternalLinksGenerator implements IIIFResource {
         if (type != null) {
             otherContent.setType(type);
         }
+        if (profile != null) {
+            otherContent.setProfile(profile); // Now compatible with URI
+        }
 
         return otherContent;
     }
-
 }

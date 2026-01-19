@@ -42,6 +42,7 @@
                             <files>
                                 <file>${root.basedir}/dspace/config/dspace.cfg</file>
                                 <file>${root.basedir}/dspace/config/local.cfg</file>
+                                <file>${root.basedir}/dspace/config/local.local.cfg</file>
                             </files>
                             <quiet>true</quiet>
                         </configuration>

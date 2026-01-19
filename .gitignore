@@ -38,15 +38,25 @@ nb-configuration.xml
 
 # Ignore a local.cfg file in root folder, if it exists
 /local.cfg
-# Also ignore it under dspace/config
-/dspace/config/local.cfg
-
+# UdeMChange: we ignore local.local.cfg, but we put local.cfg in the repo
+/dspace/config/local.local.cfg
+/dspace/log
 ##Mac noise
 .DS_Store
-
+usr/share/GeoIP/
 ##Ignore JRebel project configuration
 rebel.xml
 
 
 ## Ignore jenv configuration
 .java-version
+
+# Directories generated as a result of compilation
+/assetstore
+/lib
+/log
+/sitemaps
+/solr
+/webapps
+/config
+/sources
