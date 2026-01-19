@@ -38,7 +38,6 @@ import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.services.s3.transfer.Upload;
-import com.amazonaws.services.s3.model.S3Object;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -643,8 +642,8 @@ public class S3BitStoreService extends BaseBitStoreService {
             this.fileSize = fileSize;
             downloadChunk();
         }
-        
-        /*@Override
+
+        @Override
         public int read() throws IOException {
             // is the current chunk completely read and other are available?
             if (currPos == endOfChunk && currPos < fileSize) {
@@ -660,9 +659,15 @@ public class S3BitStoreService extends BaseBitStoreService {
                 currentChunkStream.close();
             }
             return byteRead;
-        }*/
-        
-        /*private void downloadChunk() throws IOException, FileNotFoundException {
+        }
+
+        /**
+         * This method download the next chunk from S3
+         *
+         * @throws IOException
+         * @throws FileNotFoundException
+         */
+        private void downloadChunk() throws IOException, FileNotFoundException {
             // Create a DownloadFileRequest with the desired byte range
             long startByte = currPos; // Start byte (inclusive)
             long endByte = Long.min(startByte + chunkMaxSize - 1, fileSize - 1); // End byte (inclusive)
@@ -680,55 +685,7 @@ public class S3BitStoreService extends BaseBitStoreService {
                 currentChunkFile.delete();
                 throw new IOException(e);
             }
-        }*/
-       
-        @Override
-        public int read() throws IOException {
-            // Recharger dès qu’on a DÉPASSÉ la borne et qu’il reste du fichier
-            if (currPos > endOfChunk && currPos < fileSize) {
-                if (currentChunkStream != null) try { currentChunkStream.close(); } catch (IOException ignore) {}
-                downloadChunk();
-            }
-
-            if (currPos >= fileSize) return -1;         // EOF global
-            if (currentChunkStream == null) downloadChunk();
-
-            // LIRE jusqu’au DERNIER octet inclus
-            int b = (currPos <= endOfChunk) ? currentChunkStream.read() : -1;
-            if (b != -1) { currPos++; return b; }
-
-            // EOF chunk prématuré
-            try { currentChunkStream.close(); } catch (IOException ignore) {}
-            currentChunkStream = null;
-            return -1;
         }
-
-
-        /**
-         * This method download the next chunk from S3
-         *
-         * @throws IOException
-         * @throws FileNotFoundException
-         */
-        private void downloadChunk() throws IOException {
-            long start = currPos;
-            long end   = Math.min(start + chunkMaxSize - 1, fileSize - 1);
-
-            GetObjectRequest req = new GetObjectRequest(bucketName, objectKey)
-                    .withRange(start, end);
-
-            try {
-                S3Object obj = s3Service.getObject(req);
-                currentChunkStream = obj.getObjectContent();
-
-                // Nouvelle limite du chunk
-                endOfChunk = end;
-
-            } catch (Exception e) {
-                throw new IOException("Failed to load S3 range " + start + "-" + end, e);
-            }
-        }
-
 
         @Override
         public void close() throws IOException {
