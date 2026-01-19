@@ -668,7 +668,7 @@ public class S3BitStoreService extends BaseBitStoreService {
          * @throws IOException
          * @throws FileNotFoundException
          */
-        private void downloadChunk() throws IOException, FileNotFoundException {
+        /*private void downloadChunk() throws IOException, FileNotFoundException {
             // Create a DownloadFileRequest with the desired byte range
             long startByte = currPos; // Start byte (inclusive)
             long endByte = Long.min(startByte + chunkMaxSize - 1, fileSize - 1); // End byte (inclusive)
@@ -686,7 +686,27 @@ public class S3BitStoreService extends BaseBitStoreService {
                 currentChunkFile.delete();
                 throw new IOException(e);
             }
+        }*/
+       
+        private void downloadChunk() throws IOException {
+            long start = currPos;
+            long end   = Math.min(start + chunkMaxSize - 1, fileSize - 1);
+
+            GetObjectRequest req = new GetObjectRequest(bucketName, objectKey)
+                    .withRange(start, end);
+
+            try {
+                S3Object obj = s3Service.getObject(req);
+                currentChunkStream = obj.getObjectContent();
+
+                // Nouvelle limite du chunk
+                endOfChunk = end;
+
+            } catch (Exception e) {
+                throw new IOException("Failed to load S3 range " + start + "-" + end, e);
+            }
         }
+
 
         @Override
         public void close() throws IOException {
