@@ -635,8 +635,6 @@ public class S3BitStoreService extends BaseBitStoreService {
         private long chunkMaxSize;
         private long currPos = 0;
         private long fileSize;
-        private S3Object currentS3Object;
-
 
         public S3LazyInputStream(String objectKey, long chunkMaxSize, long fileSize) throws IOException {
             this.objectKey = objectKey;
@@ -670,7 +668,7 @@ public class S3BitStoreService extends BaseBitStoreService {
          * @throws IOException
          * @throws FileNotFoundException
          */
-        /*private void downloadChunk() throws IOException, FileNotFoundException {
+        private void downloadChunk() throws IOException, FileNotFoundException {
             // Create a DownloadFileRequest with the desired byte range
             long startByte = currPos; // Start byte (inclusive)
             long endByte = Long.min(startByte + chunkMaxSize - 1, fileSize - 1); // End byte (inclusive)
@@ -688,66 +686,12 @@ public class S3BitStoreService extends BaseBitStoreService {
                 currentChunkFile.delete();
                 throw new IOException(e);
             }
-        }*/
-       private void downloadChunk() throws IOException {
-
-            // Fermer le chunk précédent (équivalent à DeleteOnCloseFileInputStream)
-            if (currentChunkStream != null) {
-                currentChunkStream.close();
-                currentChunkStream = null;
-            }
-            if (currentS3Object != null) {
-                currentS3Object.close();
-                currentS3Object = null;
-            }
-
-            long startByte = currPos;
-            if (startByte >= fileSize) {
-                return;
-            }
-
-            long endByte = Math.min(startByte + chunkMaxSize - 1, fileSize - 1);
-
-            try {
-                GetObjectRequest getRequest = new GetObjectRequest(bucketName, objectKey)
-                        .withRange(startByte, endByte);
-
-                currentS3Object = s3Service.getObject(getRequest);
-                currentChunkStream = currentS3Object.getObjectContent();
-
-                // Comportement équivalent à bytesTransferred
-                endOfChunk = endByte + 1;
-
-                if (log.isDebugEnabled()) {
-                    log.debug(
-                        "S3 chunk opened (streaming): bytes {}-{} / {} for object {}",
-                        startByte, endByte, fileSize, objectKey
-                    );
-                }
-
-            } catch (AmazonClientException e) {
-                if (currentChunkStream != null) {
-                    currentChunkStream.close();
-                    currentChunkStream = null;
-                }
-                if (currentS3Object != null) {
-                    currentS3Object.close();
-                    currentS3Object = null;
-                }
-                throw new IOException("Failed to download chunk from S3: " + objectKey, e);
-            }
         }
-
 
         @Override
         public void close() throws IOException {
             if (currentChunkStream != null) {
                 currentChunkStream.close();
-                currentChunkStream = null;
-            }
-            if (currentS3Object != null) {
-                currentS3Object.close();
-                currentS3Object = null;
             }
         }
 
