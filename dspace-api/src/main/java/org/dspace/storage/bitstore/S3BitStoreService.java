@@ -643,8 +643,29 @@ public class S3BitStoreService extends BaseBitStoreService {
             this.fileSize = fileSize;
             downloadChunk();
         }
-
+        
         @Override
+        public int read() throws IOException {
+            // Nouveau chunk nécessaire ?
+            if (currPos == endOfChunk && currPos < fileSize) {
+                currentChunkStream.close();
+                downloadChunk();
+            }
+
+            // FIX: <= au lieu de <
+            int byteRead = currPos <= endOfChunk ? currentChunkStream.read() : -1;
+
+            if (byteRead != -1) {
+                currPos++;
+            } else {
+                currentChunkStream.close();
+            }
+
+            return byteRead;
+        }
+
+
+        /*@Override
         public int read() throws IOException {
             // is the current chunk completely read and other are available?
             if (currPos == endOfChunk && currPos < fileSize) {
@@ -660,7 +681,7 @@ public class S3BitStoreService extends BaseBitStoreService {
                 currentChunkStream.close();
             }
             return byteRead;
-        }
+        }*/
 
         /**
          * This method download the next chunk from S3
