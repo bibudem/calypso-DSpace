@@ -196,10 +196,12 @@
                 <ref bean="searchFilterAuthor" />
                 <ref bean="searchFilterSubject" />
                 <ref bean="searchFilterIssued" />
-                <ref bean="searchFilterContentInOriginalBundle"/>
+                <!-- <ref bean="searchFilterContentInOriginalBundle"/> -->
                 <!-- <ref bean="searchFilterHasGeospatialMetadata"/> -->
-                <ref bean="searchFilterEntityType"/>
-                <ref bean="searchFilterAccessStatus" />
+                <ref bean="searchFilterType"/>
+                <!-- <ref bean="searchFilterAccessStatus" /> -->
+				<!-- Ajout du filtre de la langue (Nima, 23-03-26) -->
+				<ref bean="searchFilterLanguage" />
             </list>
         </property>
         <!-- Set TagCloud configuration per discovery configuration -->
@@ -211,11 +213,13 @@
                 <ref bean="searchFilterAuthor" />
                 <ref bean="searchFilterSubject" />
                 <ref bean="searchFilterIssued" />
+				<ref bean="searchFilterLanguage" />
                 <ref bean="searchFilterContentInOriginalBundle"/>
                 <ref bean="searchFilterFileNameInOriginalBundle" />
                 <ref bean="searchFilterFileDescriptionInOriginalBundle" />
                 <ref bean="searchFilterHasGeospatialMetadata" />
                 <ref bean="searchFilterEntityType"/>
+				<ref bean="searchFilterType" />
                 <ref bean="searchFilterAccessStatus" />
                 <ref bean="searchFilterIsAuthorOfPublicationRelation"/>
                 <ref bean="searchFilterIsProjectOfPublicationRelation"/>
@@ -2630,7 +2634,7 @@
         <property name="facetLimit" value="5"/>
         <property name="sortOrderSidebar" value="COUNT"/>
         <property name="sortOrderFilterPage" value="COUNT"/>
-        <property name="isOpenByDefault" value="true"/>
+        <property name="isOpenByDefault" value="false"/>
         <property name="pageSize" value="10"/>
         <property name="exposeMinAndMaxValue" value="true"/>
     </bean>
@@ -2745,7 +2749,17 @@
         </property>
     </bean>
 
-    <bean id="searchFilterAccessStatus" class="org.dspace.discovery.configuration.DiscoverySearchFilterFacet">
+	<!-- Ajout du filtre de la langue (Nima, 23-03-26) -->
+	<bean id="searchFilterLanguage" class="org.dspace.discovery.configuration.DiscoverySearchFilterFacet">
+        <property name="indexFieldName" value="language" />
+        <property name="metadataFields">
+            <list>
+                <value>dc.language.iso</value>
+            </list>
+        </property>
+    </bean>
+	
+	<bean id="searchFilterAccessStatus" class="org.dspace.discovery.configuration.DiscoverySearchFilterFacet">
         <property name="indexFieldName" value="access_status" />
         <property name="metadataFields">
             <list/>
@@ -3390,6 +3404,12 @@
 
     <bean id="sortTitle" class="org.dspace.discovery.configuration.DiscoverySortFieldConfiguration">
         <property name="metadataField" value="dc.title"/>
+        <property name="defaultSortOrder" value="asc"/>
+    </bean>
+	
+	<!-- Ajout du tri pour le filtre de la langue (Nima, 23-03-26) -->
+	<bean id="sortLanguage" class="org.dspace.discovery.configuration.DiscoverySortFieldConfiguration">
+        <property name="metadataField" value="dc.language.iso"/>
         <property name="defaultSortOrder" value="asc"/>
     </bean>
 
