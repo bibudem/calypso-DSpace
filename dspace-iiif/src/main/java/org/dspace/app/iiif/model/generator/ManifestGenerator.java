@@ -53,7 +53,7 @@ public class ManifestGenerator implements IIIFResource {
     private ImageContent logo;
     private ViewingHint viewingHint;
     private Sequence sequence;
-    private OtherContent seeAlso;
+    private final List<OtherContent> seeAlsoList = new ArrayList<>();
     private OtherContent related;
     private ImageContent thumbnail;
     private ContentSearchService searchService;
@@ -109,8 +109,8 @@ public class ManifestGenerator implements IIIFResource {
      * @param seeAlso other content model
      */
     public void addSeeAlso(ExternalLinksGenerator seeAlso) {
-        this.seeAlso = (OtherContent) seeAlso.generateResource();
-    }
+		this.seeAlsoList.add((OtherContent) seeAlso.generateResource());
+	}
 
     /**
      * Adds optional thumbnail image resource to manifest.
@@ -212,9 +212,9 @@ public class ManifestGenerator implements IIIFResource {
                 manifest.addMetadata(meta);
             }
         }
-        if (seeAlso != null) {
-            manifest.addSeeAlso(seeAlso);
-        }
+        for (OtherContent seeAlsoEntry : seeAlsoList) {
+			manifest.addSeeAlso(seeAlsoEntry);
+		}
         if (related != null) {
             manifest.addRelated(related);
         }
