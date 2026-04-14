@@ -7,35 +7,115 @@
  */
 package org.dspace.app.iiif.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 import org.dspace.app.iiif.model.generator.AnnotationGenerator;
 import org.dspace.app.iiif.model.generator.ExternalLinksGenerator;
 import org.dspace.content.Item;
+import org.dspace.content.MetadataValue;
+import org.dspace.content.service.ItemService;
+import org.dspace.handle.service.HandleService;
 import org.dspace.services.ConfigurationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
 /**
- * This service provides methods for creating {@code seAlso} external link. There should be a single instance of
- * this service per request. The {@code @RequestScope} provides a single instance created and available during
- * complete lifecycle of the HTTP request.
+ * Service for building seeAlso links in the IIIF manifest.
  *
- * @author Michael Spalti  mspalti@willamette.edu
- * @author Andrea Bollini (andrea.bollini at 4science.it)
+ * Provides:
+ *   1. The default self-referencing AnnotationList endpoint
+ *   2. dc.source.uri values as human-readable related links (text/html)
+ *   3. OAI-PMH GetRecord link for MARC XML (machine-readable, marcxml)
+ *
+ * @author Custom overlay — UdeM
  */
 @RequestScope
 @Component
 public class SeeAlsoService extends AbstractResourceService {
 
-    private static final String SEE_ALSO_LABEL = "More descriptions of this resource";
+    @Autowired
+    protected ItemService itemService;
+
+    @Autowired
+    protected HandleService handleService;
 
     public SeeAlsoService(ConfigurationService configurationService) {
         setConfiguration(configurationService);
     }
 
+    /**
+     * Default self-referencing seeAlso AnnotationList endpoint.
+     */
     public ExternalLinksGenerator getSeeAlso(Item item) {
         return new ExternalLinksGenerator(IIIF_ENDPOINT + item.getID() + "/manifest/seeAlso")
-                .setType(AnnotationGenerator.TYPE)
-                .setLabel(SEE_ALSO_LABEL);
+            .setType(AnnotationGenerator.TYPE)
+            .setLabel("More descriptions of this resource");
     }
 
+    /**
+     * Returns one seeAlso entry per dc.source.uri value (human-readable, text/html).
+     */
+    public List<ExternalLinksGenerator> getSourceUriLinks(Item item) {
+        List<MetadataValue> values = itemService.getMetadata(
+            item, "dc", "source", "uri", Item.ANY);
+
+        List<ExternalLinksGenerator> links = new ArrayList<>();
+        for (MetadataValue mv : values) {
+            String uri = mv.getValue();
+            if (StringUtils.isNotBlank(uri) && uri.startsWith("http")) {
+                links.add(
+                    new ExternalLinksGenerator(uri)
+                        .setType("dctypes:Text")
+                        .setFormat("text/html")
+                        .setLabel("Lien Sofia")
+                );
+            }
+        }
+        return links;
+    }
+
+    /**
+     * Returns an OAI-PMH GetRecord seeAlso link for the MARC XML record.
+     *
+     * OAI identifier format: oai:{oai.identifier.prefix}:{handle}
+     * e.g. oai:collections-speciales.bib.umontreal.ca:123456789/42
+     *
+     * URL format:
+     * https://{dspace.server.url}/oai/request?verb=GetRecord
+     *   &metadataPrefix=marc
+     *   &identifier=oai:{prefix}:{handle}
+     *
+     * Returns null if the item has no handle.
+     */
+    public ExternalLinksGenerator getMarcOaiSeeAlso(Item item) {
+        String handle = item.getHandle();
+        if (StringUtils.isBlank(handle)) {
+            return null;
+        }
+
+        // oai.identifier.prefix defaults to hostname of dspace.ui.url
+        String oaiPrefix = configurationService.getProperty(
+            "oai.identifier.prefix",
+            configurationService.getProperty("dspace.ui.url", "")
+                .replaceAll("https?://", "")
+                .replaceAll("/.*", "")
+        );
+
+        // OAI base URL is on the server webapp
+        String serverUrl = configurationService.getProperty("dspace.server.url");
+
+        String identifier = "oai:" + oaiPrefix + ":" + handle;
+        String oaiUrl = serverUrl + "/oai/request"
+            + "?verb=GetRecord"
+            + "&metadataPrefix=marc"
+            + "&identifier=" + identifier;
+
+        return new ExternalLinksGenerator(oaiUrl)
+            .setType("dataset")
+            .setFormat("application/xml")
+            .setLabel("Format MARC (OAI-PMH)");
+    }
 }

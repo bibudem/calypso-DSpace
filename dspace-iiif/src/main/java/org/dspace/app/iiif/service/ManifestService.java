@@ -262,8 +262,21 @@ public class ManifestService extends AbstractResourceService {
      * @param item the DSpace Item.
      */
     private void addSeeAlso(Item item) {
-        manifestGenerator.addSeeAlso(seeAlsoService.getSeeAlso(item));
-    }
+		// 1. Default self-referencing AnnotationList — disabled, returns resources:[]
+		// Uncomment when a real machine-readable aggregation endpoint exists
+		// manifestGenerator.addSeeAlso(seeAlsoService.getSeeAlso(item));
+
+		// 2. dc.source.uri — human-readable link (text/html)
+		for (ExternalLinksGenerator link : seeAlsoService.getSourceUriLinks(item)) {
+			manifestGenerator.addSeeAlso(link);
+		}
+
+		// 3. MARC XML via OAI-PMH GetRecord
+		ExternalLinksGenerator marcLink = seeAlsoService.getMarcOaiSeeAlso(item);
+		if (marcLink != null) {
+			manifestGenerator.addSeeAlso(marcLink);
+		}
+	}
 
     /**
      * This method adds a search service definition to the manifest when
