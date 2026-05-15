@@ -78,44 +78,42 @@ public class SeeAlsoService extends AbstractResourceService {
     }
 
     /**
-     * Returns an OAI-PMH GetRecord seeAlso link for the MARC XML record.
-     *
-     * OAI identifier format: oai:{oai.identifier.prefix}:{handle}
-     * e.g. oai:collections-speciales.bib.umontreal.ca:123456789/42
-     *
-     * URL format:
-     * https://{dspace.server.url}/oai/request?verb=GetRecord
-     *   &metadataPrefix=marc
-     *   &identifier=oai:{prefix}:{handle}
-     *
-     * Returns null if the item has no handle.
-     */
-    public ExternalLinksGenerator getMarcOaiSeeAlso(Item item) {
-        String handle = item.getHandle();
-        if (StringUtils.isBlank(handle)) {
-            return null;
-        }
+	 * Returns an OAI-PMH GetRecord seeAlso link for the Dublin Core record.
+	 *
+	 * OAI identifier format: oai:{oai.identifier.prefix}:{handle}
+	 * e.g. oai:collections-speciales.bib.umontreal.ca:123456789/42
+	 *
+	 * URL format:
+	 * https://{dspace.server.url}/oai/request?verb=GetRecord
+	 *   &metadataPrefix=oai_qdc
+	 *   &identifier=oai:{prefix}:{handle}
+	 *
+	 * Returns null if the item has no handle.
+	 */
+	public ExternalLinksGenerator getMarcOaiSeeAlso(Item item) {
+		String handle = item.getHandle();
+		if (StringUtils.isBlank(handle)) {
+			return null;
+		}
 
-        // oai.identifier.prefix defaults to hostname of dspace.ui.url
-        String oaiPrefix = configurationService.getProperty(
-            "oai.identifier.prefix",
-            configurationService.getProperty("dspace.ui.url", "")
-                .replaceAll("https?://", "")
-                .replaceAll("/.*", "")
-        );
+		String oaiPrefix = configurationService.getProperty(
+			"oai.identifier.prefix",
+			configurationService.getProperty("dspace.ui.url", "")
+				.replaceAll("https?://", "")
+				.replaceAll("/.*", "")
+		);
 
-        // OAI base URL is on the server webapp
-        String serverUrl = configurationService.getProperty("dspace.server.url");
+		String serverUrl = configurationService.getProperty("dspace.server.url");
 
-        String identifier = "oai:" + oaiPrefix + ":" + handle;
-        String oaiUrl = serverUrl + "/oai/request"
-            + "?verb=GetRecord"
-            + "&metadataPrefix=marc"
-            + "&identifier=" + identifier;
+		String identifier = "oai:" + oaiPrefix + ":" + handle;
+		String oaiUrl = serverUrl + "/oai/request"
+			+ "?verb=GetRecord"
+			+ "&metadataPrefix=oai_qdc"
+			+ "&identifier=" + identifier;
 
-        return new ExternalLinksGenerator(oaiUrl)
-            .setType("dataset")
-            .setFormat("application/xml")
-            .setLabel("Format MARC (OAI-PMH)");
-    }
+		return new ExternalLinksGenerator(oaiUrl)
+			.setType("dataset")
+			.setFormat("application/xml")
+			.setLabel("Format Dublin Core (OAI-PMH)");
+	}
 }

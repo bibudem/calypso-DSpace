@@ -51,6 +51,34 @@ public class ManifestService extends AbstractResourceService {
 
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(ManifestService.class);
 
+    /** NIMA 2026-05-14
+     * Known dc.description label prefixes embedded by the CSV generation script.
+     * Each value is separated from its label by " : " (space-colon-space).
+     * Labels that appear multiple times (e.g. "Description") are intentionally
+     * kept as-is — Mirador will display each value as a separate row under that label.
+     */
+    private static final String[] DESCRIPTION_LABEL_PREFIXES = {
+        "Édition",
+        "Description matérielle",
+        "Collection"
+    };
+	
+	private static final Map<String, String> LANGUAGE_MAP = Map.ofEntries(
+		Map.entry("fre", "Français"),
+		Map.entry("eng", "Anglais"),
+		Map.entry("ger", "Allemand"),
+		Map.entry("spa", "Espagnol"),
+		Map.entry("ita", "Italien"),
+		Map.entry("lat", "Latin"),
+		Map.entry("por", "Portugais"),
+		Map.entry("dut", "Néerlandais"),
+		Map.entry("rus", "Russe"),
+		Map.entry("ara", "Arabe"),
+		Map.entry("zho", "Chinois"),
+		Map.entry("jpn", "Japonais"),
+		Map.entry("und", "Indéterminée")
+	);
+
     @Autowired
     protected ItemService itemService;
 
@@ -121,12 +149,18 @@ public class ManifestService extends AbstractResourceService {
      *
      * @param item the DSpace Item
      * @param context the DSpace context
-     * @return manifest domain object
      */
     private void populateManifest(Item item, Context context) {
         String manifestId = getManifestId(item.getID());
         manifestGenerator.setIdentifier(manifestId);
-        manifestGenerator.setLabel(item.getName());
+        //manifestGenerator.setLabel(item.getName());
+		// NIMA - 2026-05-14
+		// Use dcterms.title as manifest label if available, fall back to dc.title
+		String dctermsTitle = item.getItemService()
+				.getMetadataFirstValue(item, "dcterms", "title", null, Item.ANY);
+		manifestGenerator.setLabel(
+				StringUtils.isNotBlank(dctermsTitle) ? dctermsTitle : item.getName()
+		);
         setLogoContainer();
         addRelated(item);
         addSearchService(item);
@@ -142,36 +176,28 @@ public class ManifestService extends AbstractResourceService {
 
     /**
      * Add the ranges to the manifest structure. Ranges are generated from the
-     * iiif.toc metadata
+     * iiif.toc metadata.
      *
      * @param context the DSpace Context
      * @param item the DSpace Item to represent
      * @param manifestId the generated manifestId
      */
     private void addCanvasAndRange(Context context, Item item, String manifestId) {
-
-        // Set the root Range for this manifest.
         rangeService.setRootRange(manifestId);
-        // Get bundles that contain manifest data.
         List<Bundle> bundles = utils.getIIIFBundles(item);
-        // Set the default canvas dimensions.
         if (guessCanvasDimension) {
             canvasService.guessCanvasDimensions(context, bundles);
         }
         for (Bundle bnd : bundles) {
             String bundleToCPrefix = null;
             if (bundles.size() > 1) {
-                // Check for bundle Range metadata if multiple IIIF bundles exist.
                 bundleToCPrefix = utils.getBundleIIIFToC(bnd);
             }
             for (Bitstream bitstream : utils.getIIIFBitstreams(context, bnd)) {
-                // Add the Canvas to the Sequence.
                 CanvasGenerator canvas = sequenceService.addCanvas(context, item, bnd, bitstream);
-                // Update the Ranges.
                 rangeService.updateRanges(bitstream, bundleToCPrefix, canvas);
             }
         }
-        // If Ranges were created, add them to manifest.
         Map<String, RangeGenerator> tocRanges = rangeService.getTocRanges();
         if (tocRanges != null && tocRanges.size() > 0) {
             RangeGenerator rootRange = rangeService.getRootRange();
@@ -184,7 +210,20 @@ public class ManifestService extends AbstractResourceService {
 
     /**
      * Adds DSpace Item metadata to the manifest.
-     * 
+     *
+     * For dc.description values, the CSV generation script embeds a human-readable
+     * label prefix separated by " : " (e.g. "Collection : Titre de la série, vol. 3").
+     * This method detects those prefixes and emits each value as a separate manifest
+     * metadata entry with its own label, producing distinct labelled rows in Mirador.
+     *
+     * Known prefixes (from DESCRIPTION_LABEL_PREFIXES):
+     *   "Édition"              ← 250 $a
+     *   "Description matérielle" ← 300 $a $b $c
+     *   "Collection"           ← 490 $a $v
+     *   "Description"          ← 500 $a, 546 $a, 590 $a, 591 $a $c
+     *
+     * Values without a recognised prefix are emitted normally under the field name.
+     *
      * @param context the DSpace Context
      * @param item the DSpace item
      */
@@ -197,46 +236,117 @@ public class ManifestService extends AbstractResourceService {
             if (eq.length > 2) {
                 qualifier = eq[2];
             }
-            List<MetadataValue> metadata = item.getItemService().getMetadata(item, schema, element, qualifier,
-                    Item.ANY);
-            List<String> values = new ArrayList<String>();
+            List<MetadataValue> metadata = item.getItemService()
+                    .getMetadata(item, schema, element, qualifier, Item.ANY);
+
+            // Accumulate non-description values normally; split description values individually.
+            List<String> regularValues = new ArrayList<String>();
+
             for (MetadataValue meta : metadata) {
-                // we need to perform the check here as the configuration can include jolly
-                // characters (i.e. dc.description.*) and we need to be sure to hide qualified
-                // metadata (dc.description.provenance)
                 try {
-                    if (metadataExposureService.isHidden(context, meta.getMetadataField().getMetadataSchema().getName(),
-                            meta.getMetadataField().getElement(), meta.getMetadataField().getQualifier())) {
+                    if (metadataExposureService.isHidden(context,
+                            meta.getMetadataField().getMetadataSchema().getName(),
+                            meta.getMetadataField().getElement(),
+                            meta.getMetadataField().getQualifier())) {
                         continue;
                     }
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
-                values.add(meta.getValue());
+				
+				// ---- TRANSLATE LANGUAGE CODES ---- //
+				if ("dcterms".equals(schema) && "language".equals(element) && qualifier == null) {
+					for (MetadataValue langMeta : metadata) {
+						try {
+							if (metadataExposureService.isHidden(context,
+									langMeta.getMetadataField().getMetadataSchema().getName(),
+									langMeta.getMetadataField().getElement(),
+									langMeta.getMetadataField().getQualifier())) {
+								continue;
+							}
+						} catch (SQLException e) {
+							throw new RuntimeException(e);
+						}
+						String code = langMeta.getValue().trim();
+						String humanLabel = LANGUAGE_MAP.getOrDefault(code, code);
+						manifestGenerator.addMetadata(field, humanLabel);
+					}
+					continue; // skip regular processing for this field
+				}
+				// ---- END LANGUAGE TRANSLATION ---- //
+
+                // ---- SPLIT LABELLED dc.description VALUES ---- //
+                if ("dc".equals(schema) && "description".equals(element) && qualifier == null) {
+                    String raw = meta.getValue();
+                    String splitLabel = extractDescriptionLabel(raw);
+                    if (splitLabel != null) {
+                        // Emit immediately as its own manifest metadata entry.
+                        String splitValue = raw.substring(splitLabel.length() + 3).trim(); // skip " : "
+                        if (!splitValue.isEmpty()) {
+                            manifestGenerator.addMetadata(splitLabel, splitValue);
+                            continue; // do not add to regularValues
+                        }
+                    }
+                }
+                // ---- END SPLIT ---- //
+
+                regularValues.add(meta.getValue());
             }
-            if (values.size() > 0) {
-                if (values.size() > 1) {
-                    manifestGenerator.addMetadata(field, values.get(0),
-                            values.subList(1, values.size()).toArray(new String[values.size() - 1]));
+
+            // Emit remaining (non-description or unrecognised-prefix) values normally.
+            if (regularValues.size() > 0) {
+                if (regularValues.size() > 1) {
+                    manifestGenerator.addMetadata(field, regularValues.get(0),
+                            regularValues.subList(1, regularValues.size())
+                                         .toArray(new String[regularValues.size() - 1]));
                 } else {
-                    manifestGenerator.addMetadata(field, values.get(0));
+                    manifestGenerator.addMetadata(field, regularValues.get(0));
                 }
             }
         }
-        String descrValue = item.getItemService().getMetadataFirstValue(item, "dc", "description", null, Item.ANY);
+
+        // Add IIIF manifest-level description (uses first dc.description value).
+        String descrValue = item.getItemService()
+                .getMetadataFirstValue(item, "dc", "description", null, Item.ANY);
         if (StringUtils.isNotBlank(descrValue)) {
-            manifestGenerator.addDescription(descrValue);
+            // Strip label prefix for the manifest-level description if present.
+            String splitLabel = extractDescriptionLabel(descrValue);
+            if (splitLabel != null) {
+                String stripped = descrValue.substring(splitLabel.length() + 3).trim();
+                manifestGenerator.addDescription(stripped);
+            } else {
+                manifestGenerator.addDescription(descrValue);
+            }
         }
 
-        String licenseUriValue = item.getItemService().getMetadataFirstValue(item, "dc", "rights", "uri", Item.ANY);
+        String licenseUriValue = item.getItemService()
+                .getMetadataFirstValue(item, "dc", "rights", "uri", Item.ANY);
         if (StringUtils.isNotBlank(licenseUriValue)) {
             manifestGenerator.addLicense(licenseUriValue);
         }
     }
 
     /**
-     * Adds a related item property to the manifest. The property provides a link
-     * to the Item record in the DSpace Angular UI.
+     * Checks whether a dc.description value begins with one of the known label
+     * prefixes followed by " : ".
+     *
+     * @param value the raw metadata value
+     * @return the matched label string, or null if no known prefix is found
+     */
+    private String extractDescriptionLabel(String value) {
+        if (value == null) {
+            return null;
+        }
+        for (String prefix : DESCRIPTION_LABEL_PREFIXES) {
+            if (value.startsWith(prefix + " : ")) {
+                return prefix;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Adds a related item property to the manifest.
      *
      * @param item the DSpace Item
      */
@@ -245,8 +355,7 @@ public class ManifestService extends AbstractResourceService {
     }
 
     /**
-     * Adds a viewing hint to the manifest. This is a hint to the client as to the most
-     * appropriate method of displaying the resource.
+     * Adds a viewing hint to the manifest.
      *
      * @param item the DSpace Item
      */
@@ -255,31 +364,29 @@ public class ManifestService extends AbstractResourceService {
     }
 
     /**
-     * This method adds into the manifest a {@code seeAlso} reference to additional
-     * resources found in the Item bundle(s). A typical use case would be METS / ALTO files
-     * that describe the resource.
+     * Adds seeAlso references to the manifest.
      *
      * @param item the DSpace Item.
      */
     private void addSeeAlso(Item item) {
-		// 1. Default self-referencing AnnotationList — disabled, returns resources:[]
-		// Uncomment when a real machine-readable aggregation endpoint exists
-		// manifestGenerator.addSeeAlso(seeAlsoService.getSeeAlso(item));
+        // 1. Default self-referencing AnnotationList — disabled, returns resources:[]
+        // Uncomment when a real machine-readable aggregation endpoint exists
+        // manifestGenerator.addSeeAlso(seeAlsoService.getSeeAlso(item));
 
-		// 2. dc.source.uri — human-readable link (text/html)
-		for (ExternalLinksGenerator link : seeAlsoService.getSourceUriLinks(item)) {
-			manifestGenerator.addSeeAlso(link);
-		}
+        // 2. dc.source.uri — human-readable link (text/html)
+        for (ExternalLinksGenerator link : seeAlsoService.getSourceUriLinks(item)) {
+            manifestGenerator.addSeeAlso(link);
+        }
 
-		// 3. MARC XML via OAI-PMH GetRecord
-		ExternalLinksGenerator marcLink = seeAlsoService.getMarcOaiSeeAlso(item);
-		if (marcLink != null) {
-			manifestGenerator.addSeeAlso(marcLink);
-		}
-	}
+        // 3. MARC XML via OAI-PMH GetRecord
+        ExternalLinksGenerator marcLink = seeAlsoService.getMarcOaiSeeAlso(item);
+        if (marcLink != null) {
+            manifestGenerator.addSeeAlso(marcLink);
+        }
+    }
 
     /**
-     * This method adds a search service definition to the manifest when
+     * Adds a search service definition to the manifest when
      * the item metadata includes {@code iiif.search.enabled}.
      *
      * @param item the DSpace Item
@@ -292,7 +399,8 @@ public class ManifestService extends AbstractResourceService {
     }
 
     /**
-     * Adds thumbnail to the manifest. Uses first image in the manifest.
+     * Adds thumbnail to the manifest using the first image in the manifest.
+     *
      * @param item the DSpace Item
      * @param context DSpace context
      */
@@ -308,7 +416,7 @@ public class ManifestService extends AbstractResourceService {
     }
 
     /**
-     * Adds the logo to the manifest when it is defined in DSpace configuration.
+     * Adds the logo to the manifest when defined in DSpace configuration.
      */
     private void setLogoContainer() {
         if (IIIF_LOGO_IMAGE != null) {
@@ -318,8 +426,8 @@ public class ManifestService extends AbstractResourceService {
     }
 
     /**
-     * This method looks for a PDF in the Item's ORIGINAL bundle and adds
-     * it as the Rendering resource if found.
+     * Looks for a PDF in the Item's ORIGINAL bundle and adds it as the
+     * Rendering resource if found.
      *
      * @param item DSpace Item
      * @param context DSpace context
@@ -335,10 +443,6 @@ public class ManifestService extends AbstractResourceService {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                // If the  bundle contains a PDF, assume that it represents the
-                // item and add to rendering. Ignore other mime-types. Other options
-                // might be using the primary bitstream or relying on a bitstream metadata
-                // field, e.g. iiif.rendering
                 if (mimeType != null && mimeType.contentEquals("application/pdf")) {
                     String id = BITSTREAM_PATH_PREFIX + "/" + bitstream.getID() + "/content";
                     manifestGenerator.addRendering(
@@ -350,5 +454,4 @@ public class ManifestService extends AbstractResourceService {
             }
         }
     }
-
 }

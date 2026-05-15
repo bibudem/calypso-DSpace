@@ -43,13 +43,46 @@
 			<xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='subject']/doc:element/doc:element/doc:field[@name='value']">
 				<dc:subject><xsl:value-of select="." /></dc:subject>
 			</xsl:for-each>
-			<!-- dc.description -->
+			<!-- NIMA - 2026-05-14 -->
+			<!-- dc.description — strip IIIF label prefixes before OAI-PMH output -->
 			<xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='description']/doc:element/doc:field[@name='value']">
-				<dc:description><xsl:value-of select="." /></dc:description>
+				<dc:description>
+					<xsl:variable name="raw" select="normalize-space(.)"/>
+					<xsl:choose>
+						<xsl:when test="starts-with($raw, 'Édition : ')">
+							<xsl:value-of select="substring-after($raw, 'Édition : ')"/>
+						</xsl:when>
+						<xsl:when test="starts-with($raw, 'Description mat&#xE9;rielle : ')">
+							<xsl:value-of select="substring-after($raw, 'Description mat&#xE9;rielle : ')"/>
+						</xsl:when>
+						<xsl:when test="starts-with($raw, 'Collection : ')">
+							<xsl:value-of select="substring-after($raw, 'Collection : ')"/>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:value-of select="$raw"/>
+						</xsl:otherwise>
+					</xsl:choose>
+				</dc:description>
 			</xsl:for-each>
-			<!-- dc.description.* (not provenance)-->
+			<!-- dc.description.* (not provenance) -->
 			<xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='description']/doc:element[@name!='provenance']/doc:element/doc:field[@name='value']">
-				<dc:description><xsl:value-of select="." /></dc:description>
+				<dc:description>
+					<xsl:variable name="raw" select="normalize-space(.)"/>
+					<xsl:choose>
+						<xsl:when test="starts-with($raw, 'Édition : ')">
+							<xsl:value-of select="substring-after($raw, 'Édition : ')"/>
+						</xsl:when>
+						<xsl:when test="starts-with($raw, 'Description_materielle : ')">
+							<xsl:value-of select="substring-after($raw, 'Description_materielle : ')"/>
+						</xsl:when>
+						<xsl:when test="starts-with($raw, 'Collection : ')">
+							<xsl:value-of select="substring-after($raw, 'Collection : ')"/>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:value-of select="$raw"/>
+						</xsl:otherwise>
+					</xsl:choose>
+				</dc:description>
 			</xsl:for-each>
 			<!-- dc.date -->
 			<xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='date']/doc:element/doc:field[@name='value']">
@@ -99,18 +132,18 @@
 			<xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='rights']/doc:element/doc:element/doc:field[@name='value']">
 				<dc:rights><xsl:value-of select="." /></dc:rights>
 			</xsl:for-each>
-			<!-- dc.format -->
+			<!-- dc.format 
 			<xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='format']/doc:element/doc:field[@name='value']">
 				<dc:format><xsl:value-of select="." /></dc:format>
-			</xsl:for-each>
-			<!-- dc.format.* -->
+			</xsl:for-each> -->
+			<!-- dc.format.* 
 			<xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='format']/doc:element/doc:element/doc:field[@name='value']">
 				<dc:format><xsl:value-of select="." /></dc:format>
-			</xsl:for-each>
-			<!-- ? -->
+			</xsl:for-each> -->
+			<!-- ? 
 			<xsl:for-each select="doc:metadata/doc:element[@name='bundles']/doc:element[@name='bundle']/doc:field[@name='name'][text()='ORIGINAL']/../doc:element[@name='bitstreams']/doc:element[@name='bitstream']/doc:field[@name='format']">
 				<dc:format><xsl:value-of select="." /></dc:format>
-			</xsl:for-each>
+			</xsl:for-each> -->
 			<!-- dc.coverage -->
 			<xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='coverage']/doc:element/doc:field[@name='value']">
 				<dc:coverage><xsl:value-of select="." /></dc:coverage>
