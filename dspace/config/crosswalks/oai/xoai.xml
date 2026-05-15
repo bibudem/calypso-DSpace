@@ -8,6 +8,7 @@
             <Filter ref="defaultFilter"/>
 
             <Format ref="oaidc"/>
+			<Format ref="oaiqdc"/>
             <Format ref="mets"/>
             <Format ref="xoai"/>
             <Format ref="didl"/>
@@ -119,6 +120,12 @@
             <Namespace>http://www.openarchives.org/OAI/2.0/oai_dc/</Namespace>
             <SchemaLocation>http://www.openarchives.org/OAI/2.0/oai_dc.xsd</SchemaLocation>
         </Format>
+		<Format id="oaiqdc">
+			<Prefix>oai_qdc</Prefix>
+			<XSLT>metadataFormats/oai_qdc.xsl</XSLT>
+			<Namespace>http://worldcat.org/xmlschemas/qdc-1.0/</Namespace>
+			<SchemaLocation>http://worldcat.org/xmlschemas/qdc/1.0/qdc.xsd</SchemaLocation>
+		</Format>
         <Format id="mets">
             <Prefix>mets</Prefix>
             <XSLT>metadataFormats/mets.xsl</XSLT>
