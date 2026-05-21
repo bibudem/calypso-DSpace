@@ -256,7 +256,7 @@ public class ManifestService extends AbstractResourceService {
     /**
      * Adds DSpace Item metadata to the manifest.
      *
-     * For dc.description values, the CSV generation script embeds a human-readable
+     * NIMA - For dc.description values, the CSV generation script embeds a human-readable
      * label prefix separated by " : " (e.g. "Collection : Titre de la série, vol. 3").
      * This method detects those prefixes and emits each value as a separate manifest
      * metadata entry with its own label, producing distinct labelled rows in Mirador.
@@ -268,12 +268,22 @@ public class ManifestService extends AbstractResourceService {
      *   "Description"          ← 500 $a, 546 $a, 590 $a, 591 $a $c
      *
      * Values without a recognised prefix are emitted normally under the field name.
-     *
+	 *
+     * Also, we eliminate the double display of dc.title & dcterms.title fields in Mirador
+	 *
      * @param context the DSpace Context
      * @param item the DSpace item
      */
     private void addMetadata(Context context, Item item) {
+		String dcTitle = item.getItemService()
+				.getMetadataFirstValue(item, "dc", "title", null, Item.ANY);
+		String dctermsTitle = item.getItemService()
+				.getMetadataFirstValue(item, "dcterms", "title", null, Item.ANY);
+		boolean hasBothTitles = StringUtils.isNotBlank(dcTitle) && StringUtils.isNotBlank(dctermsTitle);
         for (String field : METADATA_FIELDS) {
+			if (hasBothTitles && "dc.title".equals(field)) {
+				continue;
+			}
             String[] eq = field.split("\\.");
             String schema = eq[0];
             String element = eq[1];
