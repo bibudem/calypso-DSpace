@@ -2754,7 +2754,7 @@
         <property name="indexFieldName" value="language" />
         <property name="metadataFields">
             <list>
-                <value>dc.language.iso</value>
+                <value>dcterms.language</value>
             </list>
         </property>
     </bean>
@@ -3409,7 +3409,7 @@
 	
 	<!-- Ajout du tri pour le filtre de la langue (Nima, 23-03-26) -->
 	<bean id="sortLanguage" class="org.dspace.discovery.configuration.DiscoverySortFieldConfiguration">
-        <property name="metadataField" value="dc.language.iso"/>
+        <property name="metadataField" value="dcterms.language"/>
         <property name="defaultSortOrder" value="asc"/>
     </bean>
 
