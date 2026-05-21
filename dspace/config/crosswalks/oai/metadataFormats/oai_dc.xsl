@@ -5,6 +5,7 @@
 	xmlns:doc="http://www.lyncode.com/xoai"
 	version="1.0">
 	<xsl:output omit-xml-declaration="yes" method="xml" indent="yes" />
+	<xsl:variable name="apos">'</xsl:variable>
 	
 	<xsl:template match="/">
 		<oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" 
@@ -58,6 +59,12 @@
 						<xsl:when test="starts-with($raw, 'Collection : ')">
 							<xsl:value-of select="substring-after($raw, 'Collection : ')"/>
 						</xsl:when>
+						<xsl:when test="starts-with($raw, 'Dimensions (H x L; cm) : ')">
+							<xsl:value-of select="substring-after($raw, 'Dimensions (H x L; cm) : ')"/>
+						</xsl:when>
+						<xsl:when test="starts-with($raw, 'Notes : ')">
+							<xsl:value-of select="substring-after($raw, 'Notes : ')"/>
+						</xsl:when>
 						<xsl:otherwise>
 							<xsl:value-of select="$raw"/>
 						</xsl:otherwise>
@@ -78,11 +85,31 @@
 						<xsl:when test="starts-with($raw, 'Collection : ')">
 							<xsl:value-of select="substring-after($raw, 'Collection : ')"/>
 						</xsl:when>
+						<xsl:when test="starts-with($raw, 'Dimensions (H x L; cm) : ')">
+							<xsl:value-of select="substring-after($raw, 'Dimensions (H x L; cm) : ')"/>
+						</xsl:when>
+						<xsl:when test="starts-with($raw, 'Notes : ')">
+							<xsl:value-of select="substring-after($raw, 'Notes : ')"/>
+						</xsl:when>
 						<xsl:otherwise>
 							<xsl:value-of select="$raw"/>
 						</xsl:otherwise>
 					</xsl:choose>
 				</dc:description>
+			</xsl:for-each>
+			<!-- dc.subject — strip Type d'affiche label prefix -->
+			<xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='subject']/doc:element/doc:field[@name='value']">
+				<dc:subject>
+					<xsl:variable name="raw" select="normalize-space(.)"/>
+					<xsl:choose>
+						<xsl:when test="starts-with($raw, concat('Type d', $apos, 'affiche : '))">
+							<xsl:value-of select="substring-after($raw, concat('Type d', $apos, 'affiche : '))"/>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:value-of select="$raw"/>
+						</xsl:otherwise>
+					</xsl:choose>
+				</dc:subject>
 			</xsl:for-each>
 			<!-- dc.date -->
 			<xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='date']/doc:element/doc:field[@name='value']">
