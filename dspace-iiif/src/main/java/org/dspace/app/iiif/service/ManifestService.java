@@ -60,7 +60,9 @@ public class ManifestService extends AbstractResourceService {
     private static final String[] DESCRIPTION_LABEL_PREFIXES = {
         "Édition",
         "Description matérielle",
-        "Collection"
+        "Collection",
+		"Dimensions (H x L; cm)",
+		"Notes"
     };
 	
 	private static final Map<String, String> LANGUAGE_MAP = Map.ofEntries(
@@ -332,6 +334,19 @@ public class ManifestService extends AbstractResourceService {
                     }
                 }
                 // ---- END SPLIT ---- //
+				
+				// ---- SPLIT LABELLED dc.subject VALUES ---- //
+				if ("dc".equals(schema) && "subject".equals(element) && qualifier == null) {
+					String raw = meta.getValue();
+					if (raw != null && raw.startsWith("Type d'affiche : ")) {
+						String splitValue = raw.substring("Type d'affiche : ".length()).trim();
+						if (!splitValue.isEmpty()) {
+							manifestGenerator.addMetadata("Type d'affiche", splitValue);
+							continue;
+						}
+					}
+				}
+				// ---- END SPLIT ---- //
 
                 regularValues.add(meta.getValue());
             }
