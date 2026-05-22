@@ -280,119 +280,113 @@ public class ManifestService extends AbstractResourceService {
 		String dctermsTitle = item.getItemService()
 				.getMetadataFirstValue(item, "dcterms", "title", null, Item.ANY);
 		boolean hasBothTitles = StringUtils.isNotBlank(dcTitle) && StringUtils.isNotBlank(dctermsTitle);
-        for (String field : METADATA_FIELDS) {
+
+		for (String field : METADATA_FIELDS) {
 			if (hasBothTitles && "dc.title".equals(field)) {
 				continue;
 			}
-            String[] eq = field.split("\\.");
-            String schema = eq[0];
-            String element = eq[1];
-            String qualifier = null;
-            if (eq.length > 2) {
-                qualifier = eq[2];
-            }
-            List<MetadataValue> metadata = item.getItemService()
-                    .getMetadata(item, schema, element, qualifier, Item.ANY);
 
-            // Accumulate non-description values normally; split description values individually.
-            List<String> regularValues = new ArrayList<String>();
+			String[] eq = field.split("\\.");
+			String schema = eq[0];
+			String element = eq[1];
+			String qualifier = null;
+			if (eq.length > 2) {
+				qualifier = eq[2];
+			}
 
-            for (MetadataValue meta : metadata) {
-                try {
-                    if (metadataExposureService.isHidden(context,
-                            meta.getMetadataField().getMetadataSchema().getName(),
-                            meta.getMetadataField().getElement(),
-                            meta.getMetadataField().getQualifier())) {
-                        continue;
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-				
+			List<MetadataValue> metadata = item.getItemService()
+					.getMetadata(item, schema, element, qualifier, Item.ANY);
+
+			List<String> regularValues = new ArrayList<String>();
+			List<String> typeAfficheValues = new ArrayList<String>();
+
+			for (MetadataValue meta : metadata) {
+				try {
+					if (metadataExposureService.isHidden(context,
+							meta.getMetadataField().getMetadataSchema().getName(),
+							meta.getMetadataField().getElement(),
+							meta.getMetadataField().getQualifier())) {
+						continue;
+					}
+				} catch (SQLException e) {
+					throw new RuntimeException(e);
+				}
+
 				// ---- TRANSLATE LANGUAGE CODES ---- //
 				if ("dcterms".equals(schema) && "language".equals(element) && qualifier == null) {
-					for (MetadataValue langMeta : metadata) {
-						try {
-							if (metadataExposureService.isHidden(context,
-									langMeta.getMetadataField().getMetadataSchema().getName(),
-									langMeta.getMetadataField().getElement(),
-									langMeta.getMetadataField().getQualifier())) {
-								continue;
-							}
-						} catch (SQLException e) {
-							throw new RuntimeException(e);
-						}
-						String code = langMeta.getValue().trim();
+					String code = meta.getValue() != null ? meta.getValue().trim() : "";
+					if (!code.isEmpty()) {
 						String humanLabel = LANGUAGE_MAP.getOrDefault(code, code);
-						manifestGenerator.addMetadata(field, humanLabel);
+						regularValues.add(humanLabel);
 					}
-					continue; // skip regular processing for this field
+					continue;
 				}
 				// ---- END LANGUAGE TRANSLATION ---- //
 
-                // ---- SPLIT LABELLED dc.description VALUES ---- //
-                if ("dc".equals(schema) && "description".equals(element) && qualifier == null) {
-                    String raw = meta.getValue();
-                    String splitLabel = extractDescriptionLabel(raw);
-                    if (splitLabel != null) {
-                        // Emit immediately as its own manifest metadata entry.
-                        String splitValue = raw.substring(splitLabel.length() + 3).trim(); // skip " : "
-                        if (!splitValue.isEmpty()) {
-                            manifestGenerator.addMetadata(splitLabel, splitValue);
-                            continue; // do not add to regularValues
-                        }
-                    }
-                }
-                // ---- END SPLIT ---- //
-				
-				// ---- SPLIT LABELLED dc.subject VALUES ---- //
-				if ("dc".equals(schema) && "subject".equals(element) && qualifier == null) {
+				// ---- SPLIT LABELLED dc.description VALUES ---- //
+				if ("dc".equals(schema) && "description".equals(element) && qualifier == null) {
 					String raw = meta.getValue();
-					if (raw != null && raw.startsWith("Type d'affiche : ")) {
-						String splitValue = raw.substring("Type d'affiche : ".length()).trim();
+					String splitLabel = extractDescriptionLabel(raw);
+					if (splitLabel != null) {
+						String splitValue = raw.substring(splitLabel.length() + 3).trim();
 						if (!splitValue.isEmpty()) {
-							manifestGenerator.addMetadata("Type d'affiche", splitValue);
+							manifestGenerator.addMetadata(splitLabel, splitValue);
 							continue;
 						}
 					}
 				}
 				// ---- END SPLIT ---- //
 
-                regularValues.add(meta.getValue());
-            }
+				// ---- GROUP LABELLED dc.subject VALUES ---- //
+				if ("dc".equals(schema) && "subject".equals(element) && qualifier == null) {
+					String raw = meta.getValue();
+					if (raw != null && raw.startsWith("Type d'affiche : ")) {
+						String splitValue = raw.substring("Type d'affiche : ".length()).trim();
+						if (!splitValue.isEmpty()) {
+							typeAfficheValues.add(splitValue);
+							continue;
+						}
+					}
+				}
+				// ---- END GROUP ---- //
 
-            // Emit remaining (non-description or unrecognised-prefix) values normally.
-            if (regularValues.size() > 0) {
-                if (regularValues.size() > 1) {
-                    manifestGenerator.addMetadata(field, regularValues.get(0),
-                            regularValues.subList(1, regularValues.size())
-                                         .toArray(new String[regularValues.size() - 1]));
-                } else {
-                    manifestGenerator.addMetadata(field, regularValues.get(0));
-                }
-            }
-        }
+				regularValues.add(meta.getValue());
+			}
 
-        // Add IIIF manifest-level description (uses first dc.description value).
-        String descrValue = item.getItemService()
-                .getMetadataFirstValue(item, "dc", "description", null, Item.ANY);
-        if (StringUtils.isNotBlank(descrValue)) {
-            // Strip label prefix for the manifest-level description if present.
-            String splitLabel = extractDescriptionLabel(descrValue);
-            if (splitLabel != null) {
-                String stripped = descrValue.substring(splitLabel.length() + 3).trim();
-                manifestGenerator.addDescription(stripped);
-            } else {
-                manifestGenerator.addDescription(descrValue);
-            }
-        }
+			if (!typeAfficheValues.isEmpty()) {
+				String first = typeAfficheValues.get(0);
+				String[] rest = typeAfficheValues.subList(1, typeAfficheValues.size()).toArray(new String[0]);
+				manifestGenerator.addMetadata("Type d'affiche", first, rest);
+			}
 
-        String licenseUriValue = item.getItemService()
-                .getMetadataFirstValue(item, "dc", "rights", "uri", Item.ANY);
-        if (StringUtils.isNotBlank(licenseUriValue)) {
-            manifestGenerator.addLicense(licenseUriValue);
-        }
-    }
+			if (regularValues.size() > 0) {
+				if (regularValues.size() > 1) {
+					manifestGenerator.addMetadata(field, regularValues.get(0),
+							regularValues.subList(1, regularValues.size()).toArray(new String[0]));
+				} else {
+					manifestGenerator.addMetadata(field, regularValues.get(0));
+				}
+			}
+		}
+
+		String descrValue = item.getItemService()
+				.getMetadataFirstValue(item, "dc", "description", null, Item.ANY);
+		if (StringUtils.isNotBlank(descrValue)) {
+			String splitLabel = extractDescriptionLabel(descrValue);
+			if (splitLabel != null) {
+				String stripped = descrValue.substring(splitLabel.length() + 3).trim();
+				manifestGenerator.addDescription(stripped);
+			} else {
+				manifestGenerator.addDescription(descrValue);
+			}
+		}
+
+		String licenseUriValue = item.getItemService()
+				.getMetadataFirstValue(item, "dc", "rights", "uri", Item.ANY);
+		if (StringUtils.isNotBlank(licenseUriValue)) {
+			manifestGenerator.addLicense(licenseUriValue);
+		}
+	}
 
     /**
      * Checks whether a dc.description value begins with one of the known label
