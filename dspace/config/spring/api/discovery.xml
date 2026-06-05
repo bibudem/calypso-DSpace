@@ -195,6 +195,7 @@
             <list>
                 <ref bean="searchFilterAuthor" />
                 <ref bean="searchFilterSubject" />
+				<ref bean="searchFilterCreated" />
                 <ref bean="searchFilterIssued" />
                 <!-- <ref bean="searchFilterContentInOriginalBundle"/> -->
                 <!-- <ref bean="searchFilterHasGeospatialMetadata"/> -->
@@ -213,6 +214,7 @@
                 <ref bean="searchFilterAuthor" />
                 <ref bean="searchFilterSubject" />
                 <ref bean="searchFilterIssued" />
+				<ref bean="searchFilterCreated" />
 				<ref bean="searchFilterLanguage" />
                 <ref bean="searchFilterContentInOriginalBundle"/>
                 <ref bean="searchFilterFileNameInOriginalBundle" />
@@ -237,6 +239,7 @@
                         <ref bean="sortScore" />
                         <ref bean="sortTitle" />
                         <ref bean="sortDateIssued" />
+						<ref bean="sortDateCreated" />
                         <ref bean="sortDateAccessioned"/>
                     </list>
                 </property>
@@ -2627,7 +2630,7 @@
         <property name="indexFieldName" value="author"/>
         <property name="metadataFields">
             <list>
-                <value>dc.contributor.author</value>
+                <value>dc.contributor</value>
                 <value>dc.creator</value>
             </list>
         </property>
@@ -2672,9 +2675,27 @@
         <property name="metadataFields">
             <list>
                 <value>dc.date.issued</value>
+				<value>dcterms.issued</value>
             </list>
         </property>
         <property name="type" value="date"/>
+        <property name="facetLimit" value="5"/>
+        <property name="sortOrderSidebar" value="COUNT"/>
+        <property name="sortOrderFilterPage" value="COUNT"/>
+        <property name="isOpenByDefault" value="false"/>
+        <property name="pageSize" value="10"/>
+        <property name="exposeMinAndMaxValue" value="true"/>
+    </bean>
+	
+	<!-- Ajout du filtre de la date de création (Nima, 05-06-26) -->
+	<bean id="searchFilterCreated" class="org.dspace.discovery.configuration.DiscoverySearchFilterFacet">
+        <property name="indexFieldName" value="dateCreated" />
+        <property name="metadataFields">
+            <list>
+                <value>dcterms.created</value>
+            </list>
+        </property>
+		<property name="type" value="date"/>
         <property name="facetLimit" value="5"/>
         <property name="sortOrderSidebar" value="COUNT"/>
         <property name="sortOrderFilterPage" value="COUNT"/>
@@ -2690,6 +2711,7 @@
         <property name="metadataFields">
             <list>
                 <value>dcterms.spatial</value>
+				<value>dcterms.issued</value>
             </list>
         </property>
         <property name="facetLimit" value="5"/>
@@ -3415,6 +3437,12 @@
 
     <bean id="sortDateIssued" class="org.dspace.discovery.configuration.DiscoverySortFieldConfiguration">
         <property name="metadataField" value="dc.date.issued"/>
+        <property name="type" value="date"/>
+        <property name="defaultSortOrder" value="desc"/>
+    </bean>
+	<!-- Ajout du tri pour le filtre de la date de création (Nima, 05-06-26) -->
+	<bean id="sortDateCreated" class="org.dspace.discovery.configuration.DiscoverySortFieldConfiguration">
+        <property name="metadataField" value="dcterms.created"/>
         <property name="type" value="date"/>
         <property name="defaultSortOrder" value="desc"/>
     </bean>
