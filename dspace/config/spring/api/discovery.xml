@@ -195,8 +195,8 @@
             <list>
                 <ref bean="searchFilterAuthor" />
                 <ref bean="searchFilterSubject" />
+				<ref bean="searchFilterIssued" />
 				<ref bean="searchFilterCreated" />
-                <ref bean="searchFilterIssued" />
                 <!-- <ref bean="searchFilterContentInOriginalBundle"/> -->
                 <!-- <ref bean="searchFilterHasGeospatialMetadata"/> -->
                 <ref bean="searchFilterType"/>
@@ -2693,6 +2693,7 @@
         <property name="metadataFields">
             <list>
                 <value>dcterms.created</value>
+				<value>dc.date.created</value>
             </list>
         </property>
 		<property name="type" value="date"/>
@@ -2711,7 +2712,7 @@
         <property name="metadataFields">
             <list>
                 <value>dcterms.spatial</value>
-				<value>dcterms.issued</value>
+				<value>dc.coverage.spatial</value>
             </list>
         </property>
         <property name="facetLimit" value="5"/>
