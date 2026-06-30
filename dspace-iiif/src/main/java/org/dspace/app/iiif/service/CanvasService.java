@@ -206,11 +206,27 @@ public class CanvasService extends AbstractResourceService {
         List<ExternalLinksGenerator> canvasSeeAlso = canvasSeeAlsoService.getCanvasSeeAlso(context, item, bitstream);
         AnnotationList canvasTranscriptions = canvasTranscriptionsService.getCanvasTranscriptions(context, item, bitstream, IIIF_ENDPOINT + manifestId + "/" + bitstreamId + "/c" + count + "/transcriptions");
 
-        return addMetadata(context, bitstream,
+        CanvasGenerator canvas = addMetadata(context, bitstream,
                 new CanvasGenerator(IIIF_ENDPOINT + manifestId + "/canvas/c" + count)
-                    .addImage(image.generateResource()).addThumbnail(thumb.generateResource()).setHeight(canvasHeight)
-                    .setWidth(canvasWidth).setLabel(label).addSeeAlso(canvasSeeAlso)).addTranscriptions(canvasTranscriptions);
-    }
+                    .addImage(image.generateResource())
+                    .addThumbnail(thumb.generateResource())
+                    .setHeight(canvasHeight)
+                    .setWidth(canvasWidth)
+                    .setLabel(label)
+                    .addSeeAlso(canvasSeeAlso))
+                .addTranscriptions(canvasTranscriptions);
+
+        if ("image/tiff".equalsIgnoreCase(mimeType)) {
+            String id = BITSTREAM_PATH_PREFIX + "/" + bitstream.getID() + "/content";
+            canvas.addRendering(
+                new ExternalLinksGenerator(id)
+                    .setLabel("TIFF original")
+                    .setFormat(mimeType)
+            );
+        }
+
+        return canvas;
+     }
 
     /**
      * Ranges expect the Canvas object to have only an identifier.

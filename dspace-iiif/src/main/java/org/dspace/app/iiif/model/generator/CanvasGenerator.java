@@ -29,6 +29,7 @@ public class CanvasGenerator implements IIIFResource {
     private final String identifier;
     private final List<MetadataEntry> metadata = new ArrayList<>();
     private final List<ImageContent> images = new ArrayList();
+	private final List<OtherContent> renderings = new ArrayList<>();
     private String label;
     private Integer height;
     private Integer width;
@@ -116,6 +117,13 @@ public class CanvasGenerator implements IIIFResource {
         return this;
     }
 
+    public CanvasGenerator addRendering(ExternalLinksGenerator rendering) {
+        if (rendering != null) {
+            this.renderings.add((OtherContent) rendering.generateResource());
+        }
+        return this;
+    }
+	
     /**
      * Adds single metadata field to Manifest.
      * @param field property field
@@ -168,6 +176,9 @@ public class CanvasGenerator implements IIIFResource {
             for (ExternalLinksGenerator link: seeAlso) {
                 canvas.addSeeAlso((OtherContent)link.generateResource());
             }
+        }
+		if (renderings.size() > 0) {
+            canvas.setRenderings(renderings);
         }
         if (otherContent != null && otherContent.size() > 0) {
             for (AnnotationList oc: otherContent) {
