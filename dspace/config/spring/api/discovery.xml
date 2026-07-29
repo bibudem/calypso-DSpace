@@ -62,7 +62,7 @@
                     the value-ref is a reference to an identifier of the DiscoveryConfiguration format
                     -->
                 <!-- The default entry, DO NOT REMOVE the system requires this -->
-                <entry key="default" value-ref="defaultConfiguration" />
+                <entry key="default" value-ref="siteSearchConfiguration" />
                 <!-- Same as the "default" configuration, but does NOT filter out older versions of items -->
                 <!-- Used to display related items on single-item pages, because a relationship does not always point to the latest version of the related item -->
                 <entry key="default-relationships" value-ref="defaultRelationshipsConfiguration" />
@@ -189,6 +189,7 @@
     </bean>
 
     <!--The default configuration settings for discovery-->
+        <!--The default configuration settings for discovery-->
     <bean id="defaultConfiguration" class="org.dspace.discovery.configuration.DiscoveryConfiguration" scope="prototype">
         <!--Which sidebar facets are to be displayed-->
         <property name="sidebarFacets">
@@ -248,12 +249,11 @@
         <!--Any default filter queries, these filter queries will be used for all
             queries done by discovery for this configuration -->
         <property name="defaultFilterQueries">
-            <list>
-                <!--Only find items, communities and collections-->
-                <value>(search.resourcetype:Item AND latestVersion:true) OR search.resourcetype:Collection OR search.resourcetype:Community</value>
-                <value>-withdrawn:true AND -discoverable:false</value>
-            </list>
-        </property>
+			<list>
+				<value>(search.resourcetype:Item AND latestVersion:true) OR search.resourcetype:Collection OR search.resourcetype:Community</value>
+				<value>-withdrawn:true AND -discoverable:false</value>
+			</list>
+		</property>
         <!--The configuration for the recent submissions-->
         <property name="recentSubmissionConfiguration">
             <bean class="org.dspace.discovery.configuration.DiscoveryRecentSubmissionsConfiguration">
@@ -350,21 +350,30 @@
     </bean>
 
     <bean id="communityConfiguration" class="org.dspace.discovery.configuration.DiscoveryConfiguration"
-          scope="prototype" parent="defaultConfiguration">
-        <!--The sort filters for the discovery search-->
-        <property name="searchSortConfiguration">
-            <bean class="org.dspace.discovery.configuration.DiscoverySortConfiguration">
-                <property name="sortFields">
-                    <list>
-                        <ref bean="sortDateAccessioned"/>
-                        <ref bean="sortScore"/>
-                        <ref bean="sortTitle"/>
-                        <ref bean="sortDateIssued"/>
-                    </list>
-                </property>
-            </bean>
-        </property>
-    </bean>
+		  scope="prototype" parent="defaultConfiguration">
+
+		<property name="searchSortConfiguration">
+			<bean class="org.dspace.discovery.configuration.DiscoverySortConfiguration">
+				<property name="sortFields">
+					<list>
+						<ref bean="sortDateAccessioned"/>
+						<ref bean="sortScore"/>
+						<ref bean="sortTitle"/>
+						<ref bean="sortDateIssued"/>
+					</list>
+				</property>
+			</bean>
+		</property>
+
+		<property name="defaultFilterQueries">
+			<list>
+				<value>(search.resourcetype:Item AND latestVersion:true) OR search.resourcetype:Collection OR search.resourcetype:Community</value>
+				<value>-withdrawn:true AND -discoverable:false</value>
+				<value>-location.coll:463625e1-602d-4844-a94f-5df83c681054</value>
+				<value>-(search.resourcetype:Collection AND search.resourceid:463625e1-602d-4844-a94f-5df83c681054)</value>
+			</list>
+		</property>
+	</bean>
 
     <bean id="collectionConfiguration" class="org.dspace.discovery.configuration.DiscoveryConfiguration"
           scope="prototype" parent="defaultConfiguration">
@@ -382,6 +391,25 @@
             </bean>
         </property>
     </bean>
+	
+	<bean id="siteSearchConfiguration"
+		  class="org.dspace.discovery.configuration.DiscoveryConfiguration"
+		  scope="prototype"
+		  parent="defaultConfiguration">
+
+		<property name="defaultFilterQueries">
+			<list>
+				<value>(search.resourcetype:Item AND latestVersion:true) OR search.resourcetype:Collection OR search.resourcetype:Community</value>
+				<value>-withdrawn:true AND -discoverable:false</value>
+
+				<!-- hide items belonging to the hidden collection -->
+				<value>-location.coll:463625e1-602d-4844-a94f-5df83c681054</value>
+
+				<!-- hide the collection object itself from site search -->
+				<value>-(search.resourcetype:Collection AND search.resourceid:463625e1-602d-4844-a94f-5df83c681054)</value>
+			</list>
+		</property>
+	</bean>
 
     <bean id="defaultRelationshipsConfiguration" class="org.dspace.discovery.configuration.DiscoveryConfiguration" scope="prototype">
         <!--Which sidebar facets are to be displayed-->
