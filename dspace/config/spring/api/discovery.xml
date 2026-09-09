@@ -369,10 +369,15 @@
 			<list>
 				<value>(search.resourcetype:Item AND latestVersion:true) OR search.resourcetype:Collection OR search.resourcetype:Community</value>
 				<value>-withdrawn:true AND -discoverable:false</value>
+				
 				<value>-location.coll:463625e1-602d-4844-a94f-5df83c681054</value>
 				<value>-(search.resourcetype:Collection AND search.resourceid:463625e1-602d-4844-a94f-5df83c681054)</value>
+				
 				<value>-location.coll:b9047ea9-57cb-4833-af4a-b8ab68dfea52</value>
 				<value>-(search.resourcetype:Collection AND search.resourceid:b9047ea9-57cb-4833-af4a-b8ab68dfea52)</value>
+				
+				<value>-location.coll:e4a7d3ab-2a62-46f9-8d71-c66ebf9cdbe3</value>
+				<value>-(search.resourcetype:Collection AND search.resourceid:e4a7d3ab-2a62-46f9-8d71-c66ebf9cdbe3)</value>
 			</list>
 		</property>
 	</bean>
@@ -411,6 +416,10 @@
 				<value>-location.coll:b9047ea9-57cb-4833-af4a-b8ab68dfea52</value>
 				<!-- hide collection 2 object itself from site search -->
 				<value>-(search.resourcetype:Collection AND search.resourceid:b9047ea9-57cb-4833-af4a-b8ab68dfea52)</value>
+				<!-- hide items belonging to hidden collection 3 -->
+				<value>-location.coll:e4a7d3ab-2a62-46f9-8d71-c66ebf9cdbe3</value>
+				<!-- hide collection 3 object itself from site search -->
+				<value>-(search.resourcetype:Collection AND search.resourceid:e4a7d3ab-2a62-46f9-8d71-c66ebf9cdbe3)</value>
 			</list>
 		</property>
 	</bean>
